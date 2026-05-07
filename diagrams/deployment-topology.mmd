@@ -1,0 +1,7 @@
+flowchart LR
+  Browser --> Frontend[Frontend runtime]
+  Frontend --> Backend[Backend API runtime]
+  Backend --> Mongo[(MongoDB)]
+  Backend --> Postgres[(PostgreSQL)]
+  Backend --> Engine[Engine runtime]
+  Note[Current: local topology only. Production target not implemented.]

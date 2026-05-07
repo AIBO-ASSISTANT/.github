@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant F as Frontend
+  participant B as Backend
+  participant S as Session store
+  F->>B: POST /auth/login
+  B->>S: create session
+  B-->>F: access token + HttpOnly refresh cookie
+  F->>B: request with bearer token
+  F->>B: POST /auth/refresh with cookie
+  B->>S: rotate session
+  B-->>F: new access token + rotated cookie
+  F->>B: POST /auth/logout
+  B->>S: revoke session
+  B-->>F: clear cookie

@@ -1,0 +1,56 @@
+name: Feature request
+description: Propose a new capability or product improvement.
+title: "feat: "
+labels: ["feature", "needs-triage"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Product
+        - Backend
+        - Frontend
+        - Engine
+        - API
+        - Security
+        - Operations
+        - Documentation
+        - Cross-repository
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user, engineering, or operational problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the smallest useful version.
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: What should this explicitly not include?
+  - type: dropdown
+    id: maturity
+    attributes:
+      label: Target maturity
+      options:
+        - Prototype
+        - Partial
+        - Implemented
+        - Experimental
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies or affected contracts
+      description: Repositories, APIs, data models, auth/session behavior, deployment, or docs affected.

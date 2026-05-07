@@ -1,0 +1,13 @@
+sequenceDiagram
+  participant F as AIBO-FRONTEND
+  participant B as AIBO-BACKEND
+  participant E as AIBO-ENGINE
+  participant M as MongoDB
+  participant P as PostgreSQL
+  F->>B: /api/v1 request
+  B->>B: auth + validation
+  B->>M: users/sessions/tasks/schedules
+  B->>P: project management
+  B->>E: POST /classify
+  E-->>B: intent response
+  B-->>F: API envelope

@@ -1,0 +1,9 @@
+flowchart LR
+  User[User] --> Frontend[AIBO-FRONTEND]
+  Frontend --> Backend[AIBO-BACKEND]
+  Backend --> Mongo[(MongoDB)]
+  Backend --> Postgres[(PostgreSQL)]
+  Backend --> Engine[AIBO-ENGINE]
+  Governance[.github governance] -. standards .-> Frontend
+  Governance -. standards .-> Backend
+  Governance -. standards .-> Engine

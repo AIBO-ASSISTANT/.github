@@ -1,0 +1,38 @@
+name: Refactor proposal
+description: Propose a refactor with clear behavior preservation.
+title: "refactor: "
+labels: ["refactor", "needs-triage"]
+body:
+  - type: textarea
+    id: current_problem
+    attributes:
+      label: Current problem
+      description: What maintenance, reliability, or clarity issue exists?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_refactor
+    attributes:
+      label: Proposed refactor
+      description: What will change structurally?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Behavior preservation
+      description: What behavior must remain unchanged?
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk and rollback
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+    validations:
+      required: true

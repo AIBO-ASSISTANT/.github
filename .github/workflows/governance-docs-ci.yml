@@ -1,0 +1,66 @@
+name: Governance Docs CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  structure:
+    name: Governance structure check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required paths
+        shell: bash
+        run: |
+          required=(
+            README.md
+            CONTRIBUTING.md
+            CODE_OF_CONDUCT.md
+            SECURITY.md
+            SUPPORT.md
+            ROADMAP.md
+            CHANGELOG.md
+            LICENSE
+            docs
+            standards
+            architecture
+            workflows
+            onboarding
+            api-governance
+            security
+            deployment
+            observability
+            diagrams
+            adr
+            templates
+            ISSUE_TEMPLATE
+            PULL_REQUEST_TEMPLATE.md
+            PULL_REQUEST_TEMPLATE
+          )
+          for path in "${required[@]}"; do
+            if [ ! -e "$path" ]; then
+              echo "Missing required path: $path"
+              exit 1
+            fi
+          done
+
+      - name: Check markdown filenames
+        shell: bash
+        run: |
+          while IFS= read -r file; do
+            base=$(basename "$file")
+            case "$base" in
+              README.md|CONTRIBUTING.md|CODE_OF_CONDUCT.md|SECURITY.md|SUPPORT.md|ROADMAP.md|CHANGELOG.md|PULL_REQUEST_TEMPLATE.md)
+                continue
+                ;;
+            esac
+            if printf '%s\n' "$file" | grep -Eq '[A-Z ]'; then
+              echo "Markdown filename should be lowercase kebab-case: $file"
+              exit 1
+            fi
+          done < <(find . -path ./.git -prune -o -name "*.md" -print)

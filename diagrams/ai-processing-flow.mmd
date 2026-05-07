@@ -1,0 +1,7 @@
+flowchart LR
+  Input[User text] --> Normalize[Normalize input]
+  Normalize --> Classify[Classify intent]
+  Classify --> Extract[Extract entities]
+  Extract --> Route[Route decision]
+  Route --> Actions[Action candidates]
+  Route --> Clarify[Clarification request]

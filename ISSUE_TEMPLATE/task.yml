@@ -1,0 +1,41 @@
+name: Task
+description: Track scoped engineering or documentation work.
+title: "task: "
+labels: ["task", "needs-triage"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What should be true when this task is complete?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Files, repositories, docs, workflows, or behavior in scope.
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Required tests, commands, review evidence, or documentation checks.
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 - urgent
+        - P1 - high
+        - P2 - normal
+        - P3 - low
+    validations:
+      required: true

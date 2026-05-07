@@ -1,0 +1,45 @@
+name: Architecture proposal
+description: Propose a cross-cutting technical decision.
+title: "arch: "
+labels: ["architecture", "needs-design"]
+body:
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision needed
+      description: What decision must be made?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Current system behavior, constraints, and drivers.
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options considered
+      description: Include tradeoffs, not only the preferred option.
+    validations:
+      required: true
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Recommendation
+    validations:
+      required: true
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Impact areas
+      options:
+        - label: Service boundary
+        - label: API contract
+        - label: Database ownership
+        - label: Auth/session behavior
+        - label: Deployment/runtime
+        - label: Security
+        - label: Observability
+        - label: Requires ADR

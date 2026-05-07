@@ -1,0 +1,18 @@
+AIBO Assistant Governance Repository License Notice
+
+Copyright (c) AIBO Assistant contributors.
+
+The ecosystem-wide license has not been formally selected.
+
+Until a formal license is approved and committed, this repository does not grant
+reuse, redistribution, sublicensing, or commercial rights beyond rights granted
+by applicable law. Contributors should not treat this repository as open source
+licensed until this file is replaced by an approved license.
+
+Notes:
+
+- `AIBO-BACKEND/package.json` currently declares `ISC`.
+- That package metadata does not settle licensing for the full AIBO ecosystem.
+- Before accepting broad external contributions or public redistribution,
+  maintainers must choose a license, update this file, and align package
+  metadata across repositories.

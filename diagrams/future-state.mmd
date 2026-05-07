@@ -1,0 +1,10 @@
+flowchart LR
+  Frontend[Frontend] --> Backend[Backend API]
+  Backend --> Engine[Engine]
+  Backend --> Mongo[(Managed MongoDB)]
+  Backend --> Postgres[(Managed PostgreSQL)]
+  Backend --> Logs[Central logs]
+  Backend --> Metrics[Metrics]
+  Engine --> Metrics
+  Metrics --> Alerts[Alerts]
+  Eval[AI evaluation corpus] --> Engine

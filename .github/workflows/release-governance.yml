@@ -1,0 +1,39 @@
+name: Release Governance Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-name:
+        description: Human-readable release name.
+        required: true
+        type: string
+      affected-repository:
+        description: Repository being prepared for release.
+        required: true
+        type: choice
+        options:
+          - AIBO-BACKEND
+          - AIBO-FRONTEND
+          - AIBO-ENGINE
+          - .github
+
+jobs:
+  release-readiness:
+    name: Release readiness checklist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Confirm governance files
+        shell: bash
+        run: |
+          test -f CHANGELOG.md
+          test -f ROADMAP.md
+          test -f workflows/release-governance.md
+          test -f templates/release-notes-template.md
+
+      - name: Deployment note
+        run: |
+          echo "This workflow validates release governance files only."
+          echo "It does not deploy any environment."

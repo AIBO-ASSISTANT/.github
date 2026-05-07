@@ -1,0 +1,33 @@
+name: Deployment Placeholder
+
+on:
+  workflow_dispatch:
+    inputs:
+      target-environment:
+        description: Intended environment name.
+        required: true
+        type: choice
+        options:
+          - local
+          - ci
+          - staging-not-configured
+          - production-not-configured
+      affected-repository:
+        description: Repository that would be deployed after real deployment governance exists.
+        required: true
+        type: choice
+        options:
+          - AIBO-BACKEND
+          - AIBO-FRONTEND
+          - AIBO-ENGINE
+
+jobs:
+  no-deploy:
+    name: No deployment is performed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain placeholder
+        run: |
+          echo "This workflow is a governance placeholder."
+          echo "It intentionally does not deploy."
+          echo "Define environments, secrets, health checks, approvals, and rollback before adding deployment steps."

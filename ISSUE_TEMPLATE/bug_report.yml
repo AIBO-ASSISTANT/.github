@@ -1,0 +1,71 @@
+name: Bug report
+description: Report incorrect, broken, or regressed behavior.
+title: "fix: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: dropdown
+    id: repository
+    attributes:
+      label: Repository
+      options:
+        - AIBO-BACKEND
+        - AIBO-FRONTEND
+        - AIBO-ENGINE
+        - .github
+        - Cross-repository
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Logs, screenshots, or validation output
+      description: Redact secrets, tokens, cookies, and private data.
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Blocks main branch or release
+        - Breaks core workflow
+        - Incorrect behavior with workaround
+        - Minor issue
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: I removed secrets and private data from this report.
+          required: true

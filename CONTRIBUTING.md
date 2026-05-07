@@ -1,105 +1,133 @@
-## Contribution Guidelines
+# Contributing to AIBO
 
-To maintain code quality, consistency, and smooth collaboration across the team, all contributors are expected to follow the guidelines outlined below.
+This repository defines the shared contribution model for the AIBO ecosystem. Service repositories may add local instructions, but they must not contradict these rules.
 
-### 1. Branching Strategy
+## Contribution Principles
 
-* Direct commits or pushes to the `main` branch are strictly prohibited.
-* All work must be done on a separate branch created from the latest `main`.
+- Make the smallest responsible change that solves the stated problem.
+- Preserve existing architecture unless the pull request explicitly proposes a better one.
+- Document behavior that affects service contracts, security, deployment, operations, or onboarding.
+- Do not claim future features as implemented.
+- Keep implementation and documentation in the same pull request when behavior changes.
 
-**Branch Naming Convention:**
-Use the following format:
+## Branching
 
-```
-feature/<your-name>/<task-name>
-```
+Create branches from the latest `main`. Direct pushes to `main` are not allowed.
 
-**Examples:**
+Use lowercase kebab-case:
 
-```
-feature/ashwin/login-ui
-feature/rahul/api-integration
-fix/ashwin/navbar-bug 
-```
-
-* Use `feature/` for new features
-* Use `fix/` for bug fixes
-* Use `chore/` for maintenance or non-functional changes
-
-Branch names should be short, descriptive, and written in lowercase using hyphens.
-
----
-
-### 2. Pull Request (PR) Process
-
-* Every change must be submitted through a Pull Request (PR).
-* PRs should target the `main` branch unless specified otherwise.
-* Do not merge your own PR without approval.
-
-**PR Requirements:**
-
-* At least **one approval** from another team member is mandatory before merging.
-* Ensure your branch is up to date with `main` before requesting a review.
-* Resolve all merge conflicts before merging.
-
----
-
-### 3. Commit Guidelines
-
-* Write clear, concise, and meaningful commit messages.
-* Avoid vague messages like `fix`, `update`, or `changes`.
-
-**Recommended Format:**
-
-```
-<type>: <short description>
+```text
+feature/<owner>/<short-description>
+fix/<owner>/<short-description>
+chore/<owner>/<short-description>
+docs/<owner>/<short-description>
+refactor/<owner>/<short-description>
+security/<owner>/<short-description>
 ```
 
-**Examples:**
+Examples:
 
+```text
+feature/ashwin/auth-dashboard-route
+fix/ashwin/refresh-cookie-validation
+docs/platform/api-error-standards
 ```
-feat: add login page UI
-fix: resolve navbar alignment issue
-chore: update dependencies
+
+See [standards/branching-strategy.md](standards/branching-strategy.md).
+
+## Commits
+
+Use Conventional Commits:
+
+```text
+<type>(optional-scope): <summary>
 ```
 
-* Keep commits focused on a single logical change.
-* Do not bundle unrelated changes in one commit.
+Allowed common types:
 
----
+- `feat`
+- `fix`
+- `docs`
+- `refactor`
+- `test`
+- `chore`
+- `ci`
+- `security`
 
-### 4. PR Best Practices
+Examples:
 
-* Keep PRs **small, focused, and easy to review**.
+```text
+feat(auth): restore browser session from refresh cookie
+fix(engine): return clarification for ambiguous scheduling text
+docs(api): define validation error response format
+```
 
-* Clearly describe:
+Keep commits focused. Avoid vague summaries such as `update`, `fixes`, or `changes`.
 
-  * What changes were made
-  * Why the changes were necessary
-  * Any assumptions or trade-offs
+## Pull Requests
 
-* Link related issues or tasks if applicable.
+Every code, documentation, workflow, or policy change must go through a pull request.
 
-* Add screenshots or recordings for UI-related changes.
+Pull requests must include:
 
----
+- clear problem statement
+- summary of changes
+- testing or validation proof
+- screenshots or recordings for UI changes
+- security impact
+- architecture impact
+- breaking-change assessment
+- documentation updates or a reason none are needed
 
-### 5. Code Quality Expectations
+Use [PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md).
 
-* Follow consistent coding standards and project structure.
-* Write readable, maintainable, and well-structured code.
-* Avoid unnecessary complexity—prioritize clarity over cleverness.
-* Ensure your changes do not break existing functionality.
+## Review Rules
 
----
+- At least one approval is required before merge.
+- Risky changes require review from the owning area.
+- Authors must not merge their own pull request without approval.
+- Review comments must be resolved by code, docs, or an explicit written decision.
+- Large pull requests should be split unless the coupling is unavoidable and explained.
 
-### 6. General Rules
+See [standards/code-review-standards.md](standards/code-review-standards.md).
 
-* Test your changes before submitting a PR.
-* Do not leave commented-out or unused code.
-* Respect deadlines and communicate blockers early.
-* Be open to feedback and willing to revise your work.
+## Required Validation
 
----
+Run the checks that apply to the repository changed:
 
-Following these guidelines ensures a clean codebase, faster reviews, and efficient teamwork. Non-compliance may result in PR rejection or delays in merging.
+| Repository | Minimum local validation |
+| --- | --- |
+| `AIBO-BACKEND` | `npm run lint`, `npm run test` |
+| `AIBO-FRONTEND` | `npm run lint`, `npm test`, `npm run build` when UI/build code changes |
+| `AIBO-ENGINE` | `python -m unittest discover -s tests` |
+| `.github` | review links, naming, issue forms, workflow syntax, and documentation status claims |
+
+If a check cannot be run, explain why in the pull request and identify the residual risk.
+
+## Documentation Discipline
+
+Update documentation when a change affects:
+
+- API shape or response semantics
+- auth/session behavior
+- repository boundaries
+- environment variables
+- deployment or operational behavior
+- security posture
+- supported feature maturity
+- onboarding steps
+
+The feature maturity matrix must stay accurate. If a feature moves from planned to partial or implemented, update [docs/product/feature-maturity-matrix.md](docs/product/feature-maturity-matrix.md).
+
+## Architecture Decisions
+
+Create an ADR when a change:
+
+- changes service boundaries
+- introduces a new runtime dependency
+- changes database ownership
+- changes auth/session strategy
+- introduces deployment infrastructure
+- affects production safety or scaling strategy
+
+Use [adr/0000-template.md](adr/0000-template.md).

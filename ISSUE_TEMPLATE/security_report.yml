@@ -1,0 +1,41 @@
+name: Security hardening task
+description: Track non-sensitive security improvements. Do not disclose vulnerabilities here.
+title: "security: "
+labels: ["security", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not use this form for undisclosed vulnerabilities. Follow SECURITY.md for private reporting.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Auth/session policy
+        - Secrets management
+        - Dependency management
+        - Logging/redaction
+        - API exposure
+        - Production safety
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: Proposed hardening change
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk reduced
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+    validations:
+      required: true
