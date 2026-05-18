@@ -32,5 +32,5 @@ AIBO_ASSISTANT/
 
 - Backend health route responds.
 - Frontend dev server loads.
-- Engine `/classify` responds when running.
+- Engine `/ai-engine/analyze` and `/decision-engine/decide` respond when running.
 - Auth login/signup flow works against the backend.

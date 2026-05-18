@@ -13,8 +13,10 @@
 
 - Frontend calls backend through `/api/v1`.
 - Backend response envelope is the API contract for frontend.
-- Backend calls engine through `POST /classify` for current classification.
-- Engine pipeline output is richer than the transport response and must be adopted deliberately.
+- Backend calls engine through `POST /ai-engine/analyze` for classification and
+  entities, then `POST /decision-engine/decide` for backend-ready actions.
+- Engine transport responses are explicit pipeline contracts and must be
+  validated by consumers before use.
 - Database writes are never performed by the frontend or engine.
 
 ## Shared Responsibilities
@@ -30,6 +32,6 @@
 ## Deployment Dependencies
 
 - Frontend depends on backend API availability.
-- Backend depends on MongoDB, PostgreSQL, and optional engine availability for intent classification.
-- Engine can run independently for classification tests.
+- Backend depends on MongoDB, PostgreSQL, and optional engine availability for assistant analysis and decisions.
+- Engine can run independently for pipeline and contract tests.
 - Production topology is not implemented and must be defined before deployment automation.

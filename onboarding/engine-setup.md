@@ -23,7 +23,8 @@ python main.py "Create a high priority task to submit report tomorrow" --referen
 The transport exposes:
 
 ```text
-POST /classify
+POST /ai-engine/analyze
+POST /decision-engine/decide
 ```
 
 The engine is deterministic and rule-based. Do not treat it as an LLM-backed system.

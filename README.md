@@ -43,7 +43,7 @@ flowchart LR
   Backend -->|HttpOnly refresh cookie| Frontend
   Backend --> Mongo[(MongoDB<br/>users, sessions, tasks, schedules)]
   Backend --> Postgres[(PostgreSQL<br/>project management)]
-  Backend -->|POST /classify| Engine[AIBO-ENGINE<br/>deterministic classifier]
+  Backend -->|POST /ai-engine/analyze<br/>POST /decision-engine/decide| Engine[AIBO-ENGINE<br/>deterministic engine]
   Engine --> Backend
 ```
 

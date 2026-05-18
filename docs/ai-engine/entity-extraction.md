@@ -1,6 +1,7 @@
 # Entity Extraction Flow
 
-Entity extraction is part of the richer engine pipeline, not the current backend `/intents/classify` response.
+Entity extraction is part of the `POST /ai-engine/analyze` response. The
+backend can review those entities before calling `POST /decision-engine/decide`.
 
 ## Current Extracted Fields
 

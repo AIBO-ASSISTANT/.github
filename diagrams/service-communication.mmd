@@ -8,6 +8,8 @@ sequenceDiagram
   B->>B: auth + validation
   B->>M: users/sessions/tasks/schedules
   B->>P: project management
-  B->>E: POST /classify
-  E-->>B: intent response
+  B->>E: POST /ai-engine/analyze
+  E-->>B: classification + entities
+  B->>E: POST /decision-engine/decide
+  E-->>B: task type + actions
   B-->>F: API envelope

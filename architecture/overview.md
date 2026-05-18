@@ -8,8 +8,9 @@ flowchart LR
   Frontend -->|HTTP /api/v1| Backend[AIBO-BACKEND]
   Backend -->|Mongoose| Mongo[(MongoDB)]
   Backend -->|pg| Postgres[(PostgreSQL)]
-  Backend -->|POST /classify| Engine[AIBO-ENGINE]
-  Engine -->|intent + confidence + processed_input| Backend
+  Backend -->|POST /ai-engine/analyze| Engine[AIBO-ENGINE]
+  Backend -->|POST /decision-engine/decide| Engine
+  Engine -->|classification + entities + actions| Backend
   Governance[.github governance] -. standards .-> Frontend
   Governance -. standards .-> Backend
   Governance -. standards .-> Engine
