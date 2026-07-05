@@ -14,8 +14,28 @@ This directory is the canonical architecture source for the AIBO ecosystem.
 - [Deployment topology](deployment-topology.md)
 - [Database ownership](database-ownership.md)
 - [Database schema](database-schema.md)
+- [Database redesign](database-redesign.md)
 - [Scalability strategy](scalability-strategy.md)
 - [Future state](future-state.md)
+
+## High-Level Flow
+
+```mermaid
+flowchart TD
+  Users[Users]
+  Projects[Projects]
+  Schedules[Schedules]
+  Tasks[Tasks]
+  Activity[Activity / Progress]
+  Dashboard[Dashboard]
+
+  Users --> Projects
+  Users --> Schedules
+  Projects --> Tasks
+  Schedules --> Tasks
+  Tasks --> Activity
+  Activity --> Dashboard
+```
 
 ## Architecture Rules
 

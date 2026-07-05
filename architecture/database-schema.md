@@ -41,14 +41,25 @@ Notes:
 
 | Column | Type | Constraints | Notes |
 | --- | --- | --- | --- |
-| `id` | PK | Primary key | Project identifier |
+| `_id` | PK | Primary key | Project identifier |
+| `ownerId` | FK -> `users.id` | Required | Project owner |
 | `name` | string | Required | Project name |
 | `description` | string | Optional | Project description |
 | `type` | enum | Required | `PERSONAL` or `TEAM` |
 | `status` | enum | Required | `ACTIVE`, `COMPLETED`, or `ARCHIVED` |
-| `created_by` | FK -> `users.id` | Required | Project owner / creator |
-| `created_at` | datetime | Required | Record creation timestamp |
-| `updated_at` | datetime | Required | Record update timestamp |
+| `color` | string | Optional | Display color |
+| `icon` | string | Optional | Display icon |
+| `visibility` | enum | Required | `PRIVATE` or `TEAM` |
+| `startDate` | datetime | Optional | Project start date |
+| `targetDate` | datetime | Optional | Project target date |
+| `completedAt` | datetime | Optional | Completion timestamp |
+| `settings` | object | Optional | `{ allowComments, allowAttachments, allowSubtasks }` |
+| `createdBy` | FK -> `users.id` | Optional | Creator user |
+| `updatedBy` | FK -> `users.id` | Optional | Last update user |
+| `isDeleted` | boolean | Optional | Soft delete flag |
+| `deletedAt` | datetime | Optional | Soft delete timestamp |
+| `createdAt` | datetime | Required | Record creation timestamp |
+| `updatedAt` | datetime | Required | Record update timestamp |
 
 ## `project_members`
 
@@ -69,58 +80,78 @@ Unique constraint:
 
 | Column | Type | Constraints | Notes |
 | --- | --- | --- | --- |
-| `id` | PK | Primary key | Column identifier |
-| `project_id` | FK -> `projects.id` | Required | Parent project |
+| `_id` | PK | Primary key | Column identifier |
+| `projectId` | FK -> `projects._id` | Required | Parent project |
 | `name` | string | Required | Column name |
 | `position` | integer | Required | Display order within the project |
-| `created_at` | datetime | Required | Record creation timestamp |
-| `updated_at` | datetime | Required | Record update timestamp |
+| `color` | string | Optional | Column color |
+| `isDefault` | boolean | Optional | Default column flag |
+| `createdAt` | datetime | Required | Record creation timestamp |
+| `updatedAt` | datetime | Required | Record update timestamp |
 
 ## `schedules`
 
 | Column | Type | Constraints | Notes |
 | --- | --- | --- | --- |
-| `id` | PK | Primary key | Schedule identifier |
-| `owner_id` | FK -> `users.id` | Required | Schedule owner |
-| `title` | string | Required | Schedule title |
-| `date` | date | Required | Calendar date |
-| `start_time` | datetime | Required | Schedule start timestamp |
-| `end_time` | datetime | Required | Schedule end timestamp |
-| `status` | enum | Required | `PLANNED`, `ACTIVE`, `COMPLETED`, or `CANCELLED` |
-| `created_at` | datetime | Required | Record creation timestamp |
-| `updated_at` | datetime | Required | Record update timestamp |
+| `_id` | PK | Primary key | Schedule identifier |
+| `ownerId` | FK -> `users.id` | Required | Schedule owner |
+| `taskId` | FK -> `tasks._id` | Required | Linked task |
+| `startTime` | datetime | Required | Schedule start timestamp |
+| `endTime` | datetime | Required | Schedule end timestamp |
+| `timezone` | string | Required | IANA time zone |
+| `allDay` | boolean | Optional | All-day flag |
+| `repeatRule` | string | Optional | Recurrence rule |
+| `reminders` | array | Optional | Reminder configuration |
+| `notes` | string | Optional | Schedule notes |
+| `createdBy` | FK -> `users.id` | Optional | Creator user |
+| `updatedBy` | FK -> `users.id` | Optional | Last update user |
+| `isDeleted` | boolean | Optional | Soft delete flag |
+| `deletedAt` | datetime | Optional | Soft delete timestamp |
+| `createdAt` | datetime | Required | Record creation timestamp |
+| `updatedAt` | datetime | Required | Record update timestamp |
 
 ## `tasks`
 
 | Column | Type | Constraints | Notes |
 | --- | --- | --- | --- |
-| `id` | PK | Primary key | Task identifier |
+| `_id` | PK | Mongo ObjectId | Internal primary key |
+| `publicId` | UUID | API-safe ID | Stable public identifier |
+| `ownerId` | FK -> `users.id` | Required | Task owner |
 | `title` | string | Required | Task title |
 | `description` | string | Optional | Task description |
-| `project_id` | FK -> `projects.id` | Optional | Parent project |
-| `schedule_id` | FK -> `schedules.id` | Optional | Parent schedule |
-| `column_id` | FK -> `project_columns.id` | Optional | Project board column |
+| `status` | enum | Required | `TODO`, `IN_PROGRESS`, `REVIEW`, `DONE`, or `CANCELLED` |
 | `priority` | enum | Required | `LOW`, `MEDIUM`, `HIGH`, or `URGENT` |
-| `status` | enum | Required | `PENDING`, `IN_PROGRESS`, `COMPLETED`, or `CANCELLED` |
-| `position` | integer | Required | Sort order within the owning container |
-| `deadline` | datetime | Optional | Due deadline |
-| `completed_at` | datetime | Optional | Completion timestamp |
-| `created_by` | FK -> `users.id` | Required | Task creator |
-| `created_at` | datetime | Required | Record creation timestamp |
-| `updated_at` | datetime | Required | Record update timestamp |
+| `type` | enum | Required | `PERSONAL` or `PROJECT` |
+| `source` | enum | Required | `CHAT`, `MANUAL`, `IMPORT`, `API`, or `SYSTEM` |
+| `dueDate` | datetime | Optional | Due date |
+| `completedAt` | datetime | Optional | Completion timestamp |
+| `projectId` | FK -> `projects._id` | Optional | Parent project |
+| `columnId` | FK -> `project_columns._id` | Optional | Project board column |
+| `scheduleId` | FK -> `schedules._id` | Optional | Parent schedule |
+| `position` | integer | Optional | Order inside project column |
+| `estimatedDuration` | integer | Optional | Estimated duration |
+| `actualDuration` | integer | Optional | Actual duration spent |
+| `createdBy` | FK -> `users.id` | Optional | Creator user |
+| `updatedBy` | FK -> `users.id` | Optional | Last update user |
+| `isArchived` | boolean | Optional | Archived flag |
+| `isDeleted` | boolean | Optional | Soft delete flag |
+| `deletedAt` | datetime | Optional | Soft delete timestamp |
+| `createdAt` | datetime | Required | Record creation timestamp |
+| `updatedAt` | datetime | Required | Record update timestamp |
 
-Business rule:
+Business rules:
 
-- A task must belong to at least one of `project_id` or `schedule_id`.
-- A task may belong to both a project and a schedule.
-- `column_id` is valid only when the task belongs to the same project.
+- `publicId` is the API-safe task identifier.
+- `projectId`, `columnId`, and `scheduleId` are nullable relationship fields.
+- `position` is used for ordering tasks inside a project column.
+- `isArchived` is a logical archive state, separate from soft delete.
 
 ## `task_assignments`
 
 | Column | Type | Constraints | Notes |
 | --- | --- | --- | --- |
 | `id` | PK | Primary key | Assignment identifier |
-| `task_id` | FK -> `tasks.id` | Required | Assigned task |
+| `task_id` | FK -> `tasks.publicId` | Required | Assigned board task ID |
 | `user_id` | FK -> `users.id` | Required | Assigned user |
 | `assigned_by` | FK -> `users.id` | Required | User who created the assignment |
 | `assigned_at` | datetime | Required | Assignment timestamp |
@@ -208,16 +239,19 @@ Unique constraint:
 
 | Parent | Child | Cardinality | Notes |
 | --- | --- | --- | --- |
-| `users` | `projects` | 1 -> N | `created_by` |
-| `users` | `schedules` | 1 -> N | `owner_id` |
-| `users` | `tasks` | 1 -> N | `created_by` |
+| `users` | `projects` | 1 -> N | `ownerId` |
+| `users` | `projects` | 1 -> N | `createdBy` |
+| `users` | `schedules` | 1 -> N | `ownerId` |
+| `users` | `schedules` | 1 -> N | `createdBy` |
+| `users` | `tasks` | 1 -> N | `ownerId` |
+| `users` | `tasks` | 1 -> N | `createdBy` |
 | `users` | `project_members` | 1 -> N | `user_id` |
 | `projects` | `project_members` | 1 -> N | Membership rows |
 | `projects` | `project_columns` | 1 -> N | Ordered columns |
 | `projects` | `tasks` | 1 -> N | Optional via `project_id` |
 | `project_columns` | `tasks` | 1 -> N | Optional via `column_id` |
 | `schedules` | `tasks` | 1 -> N | Optional via `schedule_id` |
-| `tasks` | `task_assignments` | 1 -> N | Assignment rows |
+| `tasks` | `task_assignments` | 1 -> N | Assignment rows via `publicId` |
 | `users` | `task_assignments` | 1 -> N | `user_id` |
 | `users` | `task_assignments` | 1 -> N | `assigned_by` |
 | `tasks` | `executions` | 1 -> N | Execution history |
