@@ -13,6 +13,7 @@ This directory is the canonical architecture source for the AIBO ecosystem.
 - [Scheduler lifecycle](scheduler-lifecycle.md)
 - [Deployment topology](deployment-topology.md)
 - [Database ownership](database-ownership.md)
+- [Database schema](database-schema.md)
 - [Scalability strategy](scalability-strategy.md)
 - [Future state](future-state.md)
 
