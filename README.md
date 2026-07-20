@@ -163,7 +163,7 @@ Ownership rules are defined in [standards/repository-ownership.md](standards/rep
 
 ## License
 
-The ecosystem license is not finalized. The backend package currently declares `ISC`, but that does not establish an approved ecosystem-wide license. See [LICENSE](LICENSE) for the current repository notice and resolve licensing before public distribution or external contribution expansion.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Support
 
