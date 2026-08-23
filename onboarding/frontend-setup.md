@@ -22,7 +22,7 @@ Implemented or partial:
 
 - app routing
 - protected dashboard route
-- login/signup/admin login pages
+- login/signup pages
 - auth context and browser session restore helpers
 - shared API client
 

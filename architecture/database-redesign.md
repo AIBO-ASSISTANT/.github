@@ -492,7 +492,7 @@ schedules
 Recommended indexes:
 
 - `users.email` unique for login and identity.
-- `users.role`, `users.is_active`, `users.email_verified` for admin and filtering.
+- `users.is_active`, `users.email_verified` for account state and filtering.
 - `projects.owner_id`, `projects.status`, `projects.updated_at` for workspace lists.
 - `project_members.project_id + user_id` unique for membership integrity.
 - `tasks.owner_id + is_deleted + status + updated_at` for user inbox and filtered list views.

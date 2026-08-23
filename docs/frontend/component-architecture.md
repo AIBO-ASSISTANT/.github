@@ -20,4 +20,4 @@
 
 ## Current Maturity
 
-The frontend has scaffolding, auth lifecycle helpers, route protection, login/signup pages, admin login page, dashboard route, and tests for auth helpers. Complete task, schedule, project, and chatbot product screens are not implemented.
+The frontend has scaffolding, auth lifecycle helpers, route protection, login/signup pages, dashboard route, and tests for auth helpers. Complete task, schedule, project, and chatbot product screens are not implemented.

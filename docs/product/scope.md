@@ -19,7 +19,6 @@
 - External calendar write integration.
 - OpenAI/LLM provider integration.
 - Predictive analytics.
-- Enterprise tenant administration.
 - Production SLO commitments.
 
 ## Why This Boundary Exists

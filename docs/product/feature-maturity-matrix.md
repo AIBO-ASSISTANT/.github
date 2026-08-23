@@ -20,7 +20,6 @@ This matrix is the canonical source for implemented versus planned status. Updat
 | User signup/login | Implemented | Backend auth controller, validation, tests. |
 | Browser refresh sessions | Implemented | HttpOnly cookie refresh, rotation, revocation, trusted browser headers. |
 | Frontend auth lifecycle | Partial | In-memory access token, refresh helper, tab sync, login/signup screens; complete product integration still needed. |
-| User admin listing | Implemented / partial | Backend role checks exist; frontend admin area is early. |
 | Task API | Implemented | CRUD-like task workflow, soft delete/restore, filtering, validation, tests. |
 | Schedule API | Implemented / partial | Backend scheduling with conflict handling and tests; frontend schedule UI not complete. |
 | Project management API | Implemented / partial | PostgreSQL project, column, task, assignment, ordering, and activity tests; frontend project UI not complete. |

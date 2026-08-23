@@ -14,7 +14,7 @@ AIBO Assistant is a productivity platform that combines task management, schedul
 | Area | Current state | Notes |
 | --- | --- | --- |
 | Backend API | Implemented / partial | Express API with auth, users, tasks, schedules, projects, engine classification integration, validation, logging, rate limiting, MongoDB, and PostgreSQL support. |
-| Frontend | Partial | React/Vite app with routing, auth lifecycle helpers, API client, login/signup/admin login pages, protected dashboard route, and limited feature UI. |
+| Frontend | Partial | React/Vite app with routing, auth lifecycle helpers, API client, login/signup pages, protected dashboard route, and limited feature UI. |
 | AI engine | Prototype | Python deterministic intent classification, entity extraction, decision routing, pipeline schemas, FastAPI transport, and tests. No LLM/OpenAI integration is implemented. |
 | CI/CD | Planned foundation | This repository now defines reusable workflow patterns and governance, but service repositories must opt in and wire their checks. |
 | Deployment | Not implemented | No production deployment target is claimed. Deployment docs define readiness rules and placeholders only. |
