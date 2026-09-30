@@ -4,38 +4,47 @@ on:
   push:
     branches: [ "main" ]
     paths:
+      - "AIBO-ENGINE-V1.0/**"
       - "AIBO-ENGINE/**"
   pull_request:
     branches: [ "main" ]
     paths:
+      - "AIBO-ENGINE-V1.0/**"
       - "AIBO-ENGINE/**"
+  workflow_dispatch:
 
 jobs:
-  test:
+  engine-v1:
+    name: AIBO-ENGINE-V1.0 Test & Typecheck
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./AIBO-ENGINE
+        working-directory: ./AIBO-ENGINE-V1.0
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.13"
-        cache: "pip"
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest mypy anyio httpx
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e .
+          pip install pytest pytest-asyncio anyio httpx mypy build
 
-    - name: Run mypy strict type checking
-      run: |
-        mypy src tests transport api.py
+      - name: Run mypy type checking
+        run: |
+          mypy src
 
-    - name: Run pytest
-      run: |
-        pytest
+      - name: Run pytest test suite
+        run: |
+          pytest tests/ -v
+
+      - name: Verify package build
+        run: |
+          python -m build --sdist --wheel
