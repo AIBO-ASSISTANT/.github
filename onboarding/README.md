@@ -6,14 +6,16 @@ Start here when joining the AIBO ecosystem.
 
 1. [Architecture introduction](architecture-introduction.md)
 2. [Local setup](local-setup.md)
-3. [Environment setup](environment-setup.md)
-4. [Backend setup](backend-setup.md)
-5. [Frontend setup](frontend-setup.md)
-6. [Engine setup](engine-setup.md)
-7. [Testing guide](testing-guide.md)
-8. [Debugging guide](debugging-guide.md)
-9. [Workflow expectations](workflow-expectations.md)
-10. [Glossary](glossary.md)
+3. [Docker & Ollama setup](docker-setup.md)
+4. [Environment setup](environment-setup.md)
+5. [Backend setup](backend-setup.md)
+6. [Frontend setup](frontend-setup.md)
+7. [Engine setup](engine-setup.md)
+8. [Testing guide](testing-guide.md)
+9. [Debugging guide](debugging-guide.md)
+10. [Workflow expectations](workflow-expectations.md)
+11. [Glossary](glossary.md)
+
 
 ## Onboarding Goal
 

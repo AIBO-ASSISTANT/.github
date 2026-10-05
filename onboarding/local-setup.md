@@ -34,7 +34,10 @@ AIBO_ASSISTANT/
 
 ## 3. Fast Setup via Docker Compose (Recommended)
 
-The fastest way to run the entire verified stack is using Docker Compose:
+The fastest and most consistent way to run the entire verified stack (including Ollama local LLM, MongoDB replica set, Redis, and all microservices) is using Docker Compose.
+
+> [!TIP]
+> For a dedicated, comprehensive first-time Docker installation manual with Ollama model pulling and GPU tuning, read the **[Complete Docker Setup Guide](docker-setup.md)**.
 
 ```powershell
 # 1. Clone the repository and navigate to root
@@ -44,20 +47,26 @@ cd c:\Projects\AIBO_ASSISTANT
 Copy-Item .env.example .env
 Copy-Item AIBO-BACKEND\.env.example AIBO-BACKEND\.env
 Copy-Item AIBO-ENGINE-V1.0\.env.example AIBO-ENGINE-V1.0\.env
-Copy-Item AIBO-FRONTEND\.env.example AIBO-FRONTEND\.env
+Copy-Item AIBO-FRONTEND\.env.example AIBO-FRONTEND\.env.local
 
-# 3. Ensure the same ENGINE_SECRET is set in AIBO-BACKEND\.env and AIBO-ENGINE-V1.0\.env
+# 3. Ensure ENGINE_SECRET and JWT_SECRET are set in the root .env
 
-# 4. Start all services
+# 4. Start all services in detached mode
 docker compose up -d --build
 
-# 5. Check container health
+# 5. Pull the Ollama local AI model (first time only)
+docker compose exec ollama ollama pull qwen2.5:7b
+
+# 6. Check container health
 docker compose ps
 ```
 
 Once running:
 - **Web UI**: [http://localhost:8080](http://localhost:8080)
 - **Backend API**: [http://localhost:5000/api/v1/health](http://localhost:5000/api/v1/health)
+- **Cognitive Engine**: [http://localhost:5001/health](http://localhost:5001/health)
+- **Ollama API**: [http://localhost:11434](http://localhost:11434)
+
 - **Engine Health**: [http://localhost:5001/health](http://localhost:5001/health)
 
 ---
@@ -132,8 +141,10 @@ npm run build
 
 ## 6. Service-Specific Setup Guides
 
+- [Complete Docker & Ollama Setup Guide](docker-setup.md)
 - [Backend Developer Setup](backend-setup.md)
 - [Cognitive Engine Developer Setup](engine-setup.md)
 - [Frontend Developer Setup](frontend-setup.md)
 - [Testing Architecture Guide](testing-guide.md)
 - [Environment Configuration Guide](environment-setup.md)
+
