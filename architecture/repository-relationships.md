@@ -1,37 +1,98 @@
-# Repository Relationships
+# Repository Relationships & Integration Contracts
 
-## Ownership Model
+This document formalizes the multi-repository contract interaction model, interface dependencies, and data-flow guarantees across the AIBO Assistant ecosystem.
 
-| Repository | Owns | Does not own |
-| --- | --- | --- |
-| `.github` | Standards, templates, ADR process, shared docs, CI/CD governance, security and operational policy. | Runtime implementation or service-specific business logic. |
-| `AIBO-BACKEND` | API contracts, auth/session lifecycle, validation, persistence, service orchestration, backend tests. | Browser UI, engine internals, frontend state. |
-| `AIBO-FRONTEND` | User experience, route composition, browser auth behavior, API client usage, accessibility. | API authorization, database writes, refresh token storage. |
-| `AIBO-ENGINE` | Intent classification, entity extraction, routing, engine schemas, deterministic pipeline. | User sessions, persistence, UI decisions, backend authorization. |
+---
 
-## Contract Boundaries
+## 1. Multi-Repository Ownership Matrix
 
-- Frontend calls backend through `/api/v1`.
-- Backend response envelope is the API contract for frontend.
-- Backend calls engine through `POST /ai-engine/analyze` for classification and
-  entities, then `POST /decision-engine/decide` for backend-ready actions.
-- Engine transport responses are explicit pipeline contracts and must be
-  validated by consumers before use.
-- Database writes are never performed by the frontend or engine.
+| Repository | Owns | Does NOT Own |
+| :--- | :--- | :--- |
+| **`.github`** | Ecosystem standards, community health, architecture specs, ADR process, CI/CD templates, runbooks, and onboarding workflows. | Service runtime code, tests, or database schemas. |
+| **`AIBO-BACKEND`** | API contracts (`/api/v1/*`), authentication/session lifecycle, MongoDB persistence, Redis caching/queues, durable confirmation atomic claim, and service orchestration. | Browser UI presentation, cognitive NLU logic, LLM gateway prompts. |
+| **`AIBO-FRONTEND`** | Web application, route composition, user experience, in-memory token management, theme design system, and WebSocket client subscriptions. | Database writes, API authorization, refresh token cookie manipulation. |
+| **`AIBO-ENGINE-V1.0`** | Intent classification, entity extraction, planning, action authorization policies, multi-provider LLM gateway, and confirmation token synthesis. | Persistent databases, user sessions, direct DB mutations, authentication issuance. |
 
-## Shared Responsibilities
+---
 
-| Topic | Shared by | Rule |
-| --- | --- | --- |
-| Auth UX | Frontend + backend | Frontend handles browser state; backend owns security controls. |
-| Intent execution | Backend + engine | Engine proposes structured actions; backend validates and executes. |
-| API docs | Backend + governance | Backend owns OpenAPI source; governance owns standards. |
-| Release readiness | All repos | No release claim without validation evidence. |
-| Security | All repos | Secrets, tokens, logs, and user data must follow shared security policy. |
+## 2. Cross-Repository Integration Contracts
 
-## Deployment Dependencies
+```
+┌─────────────────┐                      ┌─────────────────┐                      ┌──────────────────┐
+│  AIBO-FRONTEND  │                      │   AIBO-BACKEND  │                      │ AIBO-ENGINE-V1.0 │
+└────────┬────────┘                      └────────┬────────┘                      └────────┬─────────┘
+         │                                        │                                        │
+         │ 1. POST /api/v1/engine/orchestrate     │                                        │
+         ├───────────────────────────────────────►│                                        │
+         │    (Bearer JWT + userMessage)          │ 2. POST /orchestrate                   │
+         │                                        ├───────────────────────────────────────►│
+         │                                        │    (Header: x-engine-secret,           │
+         │                                        │     x-request-id, monotonic budget)    │
+         │                                        │                                        │ 3. NLU, Plan, Auth
+         │                                        │ 4. OrchestrationResult                 │
+         │                                        │◄───────────────────────────────────────┤
+         │                                        │    (status: awaiting_confirmation,     │
+         │                                        │     confirmation.token: HMAC-SHA256)   │
+         │ 5. Response Envelope                   │                                        │
+         │◄───────────────────────────────────────┤                                        │
+         │                                        │                                        │
+         │ 6. POST /api/v1/engine/orchestrate     │                                        │
+         │    (confirmation: {decision: confirm,  │                                        │
+         │                    token: ...})        │ 7. Atomic Claim Pending State in Mongo │
+         ├───────────────────────────────────────►│    (Transition: AWAITING -> EXECUTING) │
+         │                                        │                                        │
+         │                                        │ 8. POST /orchestrate (Execution Turn)  │
+         │                                        ├───────────────────────────────────────►│
+         │                                        │                                        │ 9. Execute Actions
+         │                                        │ 10. Backend Client Callbacks           │
+         │                                        │◄───────────────────────────────────────┤
+         │                                        │     (POST /tasks, POST /schedules)     │
+         │                                        │                                        │
+         │                                        │ 11. Final Orchestration Result         │
+         │                                        │◄───────────────────────────────────────┤
+         │ 12. Final Execution Result             │                                        │
+         │◄───────────────────────────────────────┤                                        │
+```
 
-- Frontend depends on backend API availability.
-- Backend depends on MongoDB, PostgreSQL, and optional engine availability for assistant analysis and decisions.
-- Engine can run independently for pipeline and contract tests.
-- Production topology is not implemented and must be defined before deployment automation.
+### 2.1 Frontend ↔ Backend Contract
+- **Protocol**: HTTPS / REST on port 5000, WebSockets (Socket.io) on port 5000.
+- **Payload Format**: Standard API envelopes:
+  ```json
+  {
+    "success": true,
+    "data": { ... },
+    "meta": { "timestamp": "...", "requestId": "..." }
+  }
+  ```
+- **Authentication**: `Authorization: Bearer <access_token>` in request headers. Refresh token delivered automatically via secure `HttpOnly` cookie.
+
+### 2.2 Backend ↔ Engine Contract
+- **Protocol**: HTTP/1.1 on internal private network (Port 5001).
+- **Authentication**: Required header `x-engine-secret` matching `ENGINE_SECRET`. Direct unauthenticated requests are rejected with HTTP 401.
+- **Canonical Route**: `POST /orchestrate`
+  - Accepts `OrchestrationRequest`: `user_message`, `conversation_id`, `project_id`, `reference_date`, `conversation_history`, `confirmation`.
+  - Returns `OrchestrationResult`: `status` (`completed`, `awaiting_confirmation`, `needs_clarification`, `execution_failed`, `cancelled`), `response_text`, `proposed_actions`, `confirmation`, `latency_ms`.
+- **Legacy Fallback Routes**: `POST /process` and `POST /respond` for backward compatibility during phased rollouts.
+- **Notification Route**: `POST /notification/scan` for scheduled proactive task and schedule analysis.
+
+---
+
+## 3. Shared Operational Responsibilities
+
+| Responsibility Area | Involving Repositories | Standard Invariant |
+| :--- | :--- | :--- |
+| **Authentication & Session** | Frontend + Backend | Frontend holds access token in memory only; backend rotates refresh tokens and enforces revocation. |
+| **Cognitive Interaction** | Backend + Engine | Engine is the brain; backend is the authoritative effector. Zero direct DB access in engine. |
+| **Durable Confirmation** | Backend + Engine | Engine issues signed HMAC-SHA256 tokens; backend persists and atomically claims confirmation records in MongoDB. |
+| **Observability & Correlation** | All Repositories | `x-request-id` and `x-correlation-id` are propagated through Frontend -> Backend -> Engine -> Database queries. |
+| **Failure Containment** | All Repositories | Timeouts and errors fail closed with zero database mutations. |
+
+---
+
+## 4. Deployment Dependencies
+
+1. **MongoDB (Replica Set `rs0`)**: Must be healthy before Backend starts (required for Mongoose multi-document transactions).
+2. **Redis (v7+)**: Must be healthy before Backend starts (required for BullMQ queue workers and rate limiters).
+3. **Engine (`AIBO-ENGINE-V1.0`)**: Must pass `/ready` probe before Backend routes cognitive traffic.
+4. **Backend (`AIBO-BACKEND`)**: Must pass `/api/v1/health/ready` probe before Frontend proxies requests.
+5. **Frontend (`AIBO-FRONTEND`)**: Serves browser client on port 8080 and proxies `/api` to backend.

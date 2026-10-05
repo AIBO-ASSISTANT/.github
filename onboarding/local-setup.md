@@ -1,36 +1,139 @@
-# Local Setup
+# AIBO Assistant — Local Developer Onboarding & Environment Setup
 
-The workspace is expected to contain sibling repositories:
+This guide walks new engineers through setting up, running, and verifying the complete AIBO Assistant ecosystem on a local workstation.
+
+---
+
+## 1. Prerequisites & Toolchain
+
+Ensure the following tools are installed on your workstation:
+- **Node.js**: v22.17.0+ (LTS) with `npm` v10+
+- **Python**: v3.11+ with `uv` (modern Python package manager)
+- **MongoDB**: Community Edition v6.0+ (configured as replica set `rs0` for transactions)
+- **Redis**: v7.0+
+- **Docker & Docker Compose**: Docker Desktop / Engine v24+ with Compose v2
+- **Git**: v2.40+
+
+---
+
+## 2. Workspace Organization
+
+The root directory contains three primary application subprojects and central governance:
 
 ```text
 AIBO_ASSISTANT/
-  .github/
-  AIBO-BACKEND/
-  AIBO-FRONTEND/
-  AIBO-ENGINE/
+├── .github/              # Central engineering governance, standards, architecture
+├── AIBO-BACKEND/         # Node.js 22 / Express 5 API gateway & persistence manager
+├── AIBO-FRONTEND/        # React 19 / Vite 8 web application
+├── AIBO-ENGINE-V1.0/     # Canonical Python 3.11+ FastAPI cognitive brain
+├── docker-compose.yml    # Multi-container orchestration stack
+└── README.md             # Top-level workspace instructions
 ```
 
-## Required Local Tools
+---
 
-- Node.js 22 or newer for backend.
-- Node.js compatible with the frontend package lock.
-- npm.
-- Python 3 with FastAPI/Pydantic available for engine transport.
-- MongoDB.
-- PostgreSQL.
-- Git.
+## 3. Fast Setup via Docker Compose (Recommended)
 
-## Suggested Startup Order
+The fastest way to run the entire verified stack is using Docker Compose:
 
-1. Start MongoDB.
-2. Start PostgreSQL.
-3. Start the engine if testing intent classification.
-4. Start backend.
-5. Start frontend.
+```powershell
+# 1. Clone the repository and navigate to root
+cd c:\Projects\AIBO_ASSISTANT
 
-## Validate Setup
+# 2. Configure environment files from templates
+Copy-Item .env.example .env
+Copy-Item AIBO-BACKEND\.env.example AIBO-BACKEND\.env
+Copy-Item AIBO-ENGINE-V1.0\.env.example AIBO-ENGINE-V1.0\.env
+Copy-Item AIBO-FRONTEND\.env.example AIBO-FRONTEND\.env
 
-- Backend health route responds.
-- Frontend dev server loads.
-- Engine `/ai-engine/analyze` and `/decision-engine/decide` respond when running.
-- Auth login/signup flow works against the backend.
+# 3. Ensure the same ENGINE_SECRET is set in AIBO-BACKEND\.env and AIBO-ENGINE-V1.0\.env
+
+# 4. Start all services
+docker compose up -d --build
+
+# 5. Check container health
+docker compose ps
+```
+
+Once running:
+- **Web UI**: [http://localhost:8080](http://localhost:8080)
+- **Backend API**: [http://localhost:5000/api/v1/health](http://localhost:5000/api/v1/health)
+- **Engine Health**: [http://localhost:5001/health](http://localhost:5001/health)
+
+---
+
+## 4. Native Local Development Setup
+
+If developing directly on the host machine:
+
+### Step 1: Start Databases
+```powershell
+# MongoDB with replica set (required for durable confirmation transactions)
+mongod --replSet rs0 --port 27017 --dbpath C:\data\db
+
+# In a separate shell, initialize replica set if first time:
+mongosh --eval "rs.initiate()"
+
+# Start Redis
+redis-server --port 6379
+```
+
+### Step 2: Start Cognitive Engine (`AIBO-ENGINE-V1.0`)
+```powershell
+cd AIBO-ENGINE-V1.0
+uv sync
+uv run uvicorn src.api.app:app --host 0.0.0.0 --port 5001 --reload
+```
+
+### Step 3: Start Backend API (`AIBO-BACKEND`)
+```powershell
+cd ../AIBO-BACKEND
+npm install
+npm run dev
+```
+
+### Step 4: Start Frontend Client (`AIBO-FRONTEND`)
+```powershell
+cd ../AIBO-FRONTEND
+npm install
+npm run dev
+```
+
+---
+
+## 5. Verification & Test Suite Execution
+
+Run the complete test battery to verify zero regressions:
+
+```powershell
+# 1. Cognitive Engine Tests (606 tests)
+cd AIBO-ENGINE-V1.0
+uv run pytest
+uv run mypy src
+
+# 2. Backend Unit & Integration Tests (343 tests)
+cd ../AIBO-BACKEND
+npm test
+npm run build
+
+# 3. Cross-Repository E2E Integration Suite (92 scenarios)
+$env:PYTHON_EXEC = (Get-Command uv).Source
+npm run test:e2e
+
+# 4. Frontend Component & Unit Tests (87 tests)
+cd ../AIBO-FRONTEND
+npm test
+npm run type-check
+npm run lint
+npm run build
+```
+
+---
+
+## 6. Service-Specific Setup Guides
+
+- [Backend Developer Setup](backend-setup.md)
+- [Cognitive Engine Developer Setup](engine-setup.md)
+- [Frontend Developer Setup](frontend-setup.md)
+- [Testing Architecture Guide](testing-guide.md)
+- [Environment Configuration Guide](environment-setup.md)

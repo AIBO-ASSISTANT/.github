@@ -1,170 +1,168 @@
-# AIBO Engineering Governance
+# AIBO Engineering Governance & Architecture
 
-This repository is the engineering operating system for the AIBO Assistant ecosystem. It defines the shared standards, documentation architecture, workflow rules, templates, CI/CD governance, and operational expectations used by:
+This repository serves as the engineering operating system, shared architectural standards, workflow governance, and cross-repository operational documentation for the **AIBO Assistant** multi-repository ecosystem:
 
-- `AIBO-BACKEND`
-- `AIBO-FRONTEND`
-- `AIBO-ENGINE`
-- this `.github` governance repository
+- [`AIBO-BACKEND`](../AIBO-BACKEND) — Node 22 / Express 5 authenticated API gateway, task/schedule/project orchestration boundary, and state manager.
+- [`AIBO-FRONTEND`](../AIBO-FRONTEND) — React 19 / Vite 8 / TypeScript web application and real-time interactive user interface.
+- [`AIBO-ENGINE-V1.0`](../AIBO-ENGINE-V1.0) — Canonical cognitive AI engine, multi-provider LLM gateway, intent understanding, and planning pipeline.
+- [`.github`](.) — Central engineering governance, community health, architecture specifications, standards, and onboarding workflows.
 
-AIBO Assistant is a productivity platform that combines task management, scheduling, project management, and a deterministic intent-processing engine. The current system is not a mature autonomous AI product. The backend is the strongest implementation area, the frontend is an early application scaffold with auth flow work, and the engine is a rule-based prototype with stable contracts that can evolve into stronger AI capabilities later.
+AIBO is an intelligent personal assistant that unifies natural language intent understanding, scheduling with conflict prevention, multi-user project boards, task management, personal journaling, and proactive notification intelligence with strict monotonic deadlines and durable confirmation safety.
 
-## Current Implementation Status
+---
 
-| Area | Current state | Notes |
-| --- | --- | --- |
-| Backend API | Implemented / partial | Express API with auth, users, tasks, schedules, projects, engine classification integration, validation, logging, rate limiting, MongoDB, and PostgreSQL support. |
-| Frontend | Partial | React/Vite app with routing, auth lifecycle helpers, API client, login/signup pages, protected dashboard route, and limited feature UI. |
-| AI engine | Prototype | Python deterministic intent classification, entity extraction, decision routing, pipeline schemas, FastAPI transport, and tests. No LLM/OpenAI integration is implemented. |
-| CI/CD | Planned foundation | This repository now defines reusable workflow patterns and governance, but service repositories must opt in and wire their checks. |
-| Deployment | Not implemented | No production deployment target is claimed. Deployment docs define readiness rules and placeholders only. |
-| Observability | Partial / planned | Backend has structured logging and request IDs. Metrics, tracing, dashboards, and alerting are roadmap items. |
-| Security governance | Baseline | Backend has auth/session hardening and validation. Formal vulnerability process, secret rotation, and production controls still need operational adoption. |
+## 1. Verified System Implementation Status (V1.0 Release Candidate)
 
-See the full [feature maturity matrix](docs/product/feature-maturity-matrix.md) before making product, roadmap, or release claims.
+| Subsystem / Area | Implementation Status | Test & Verification Evidence | Architecture & Production Notes |
+| :--- | :---: | :--- | :--- |
+| **Cognitive Engine** (`AIBO-ENGINE-V1.0`) | **Verified / Production Ready** | **606/606 Pytest tests passed**; MyPy 0 errors across 92 files | FastAPI 0.115, Pydantic 2.10, multi-provider LLM Gateway (Gemini 3.6 Flash, OpenAI GPT-4o-mini, Ollama Qwen2.5), circuit breaker, deterministic fallback, monotonic execution budgets, and HMAC-SHA256 confirmation tokens. |
+| **Backend API Gateway** (`AIBO-BACKEND`) | **Verified / Production Ready** | **343/343 Jest tests passed** (31 suites); TypeScript 0 errors | Express 5.2, Node 22+, Mongoose 9.6, MongoDB 6/7 authoritative persistence, Redis 7 (BullMQ event queues & distributed rate limiters), Socket.io 4.8 real-time hub, and dual-mode orchestration. |
+| **Web Frontend** (`AIBO-FRONTEND`) | **Verified / Production Ready** | **87/87 tests passed** (32 unit + 55 component); Vite build 833ms | React 19, Vite 8, React Router 7, Zustand 5, Recharts, dark/light theme tokens, Scheduler, Project Manager Kanban, Diary, Dashboard, and tabbed Settings Hub. |
+| **Cross-Repo E2E Suite** | **Verified / Production Ready** | **92/92 E2E scenarios passed** (100% pass rate in 82s) | Real Engine + Backend + isolated MongoDB test harness testing normal dialogue, task/schedule CRUD, clarification, confirmation replay prevention, cancellation safety, error injection (429, 503, timeouts), and durable state survival across restarts. |
+| **Deployment & Containers** | **Verified / Production Ready** | Multi-container `docker-compose.yml` validated via `docker compose config` | Containerized topology: `aibo-frontend` (Nginx 8080), `aibo-backend` (5000), `aibo-engine` (5001), `mongodb` (Replica set `rs0` on 27017), `redis` (6379), and `ollama` (11434). |
+| **Observability & Diagnostics** | **Verified / Production Ready** | Dedicated health probes and in-process metrics snapshots | Structured JSON logging (Pino and Structlog), request ID & correlation propagation (`x-request-id`, `x-correlation-id`), `/api/v1/health/live`, `/ready`, `/dependencies`, and `/metrics`. |
+| **Security Governance** | **Verified / Production Ready** | Zero DB mutation on security failure; 12 security E2E scenarios passed | Constant-time HMAC confirmation validation, shared `ENGINE_SECRET` boundary, HttpOnly cookie refresh sessions, JWT access tokens, role-based controls, input sanitization, and security scanners. |
 
-## Repository Ecosystem
+See the complete [Feature Maturity Matrix](docs/product/feature-maturity-matrix.md) for granular domain breakdowns.
 
-| Repository | Ownership | Primary responsibilities |
-| --- | --- | --- |
-| `.github` | Engineering governance | Shared standards, community health files, templates, ADR process, architecture docs, CI/CD policy, security policy, onboarding, and operational standards. |
-| `AIBO-BACKEND` | Platform/API | HTTP API, authentication, session lifecycle, validation, persistence, backend orchestration, OpenAPI source, and service-to-engine integration. |
-| `AIBO-FRONTEND` | Web experience | Browser UI, route composition, auth lifecycle, API client behavior, user workflows, accessibility, and frontend state boundaries. |
-| `AIBO-ENGINE` | AI domain layer | Deterministic intent classification, entity extraction, routing, engine schemas, and local transport adapter. |
+---
 
-Detailed boundaries are documented in [architecture/service-boundaries.md](architecture/service-boundaries.md) and [architecture/repository-relationships.md](architecture/repository-relationships.md).
+## 2. Multi-Repository Ecosystem
 
-## Architecture Summary
-
-```mermaid
-flowchart LR
-  User[Browser user] --> Frontend[AIBO-FRONTEND<br/>React + Vite]
-  Frontend -->|/api/v1 + bearer access token| Backend[AIBO-BACKEND<br/>Express API]
-  Backend -->|HttpOnly refresh cookie| Frontend
-  Backend --> Mongo[(MongoDB<br/>users, sessions, tasks, schedules)]
-  Backend --> Postgres[(PostgreSQL<br/>project management)]
-  Backend -->|POST /ai-engine/analyze<br/>POST /decision-engine/decide| Engine[AIBO-ENGINE<br/>deterministic engine]
-  Engine --> Backend
+```
+                                  ┌─────────────────────────────┐
+                                  │      .github Governance     │
+                                  │   (Standards, Architecture, │
+                                  │    CI/CD Rules, Onboarding) │
+                                  └──────────────┬──────────────┘
+                                                 │ defines standards
+                   ┌─────────────────────────────┼─────────────────────────────┐
+                   ▼                             ▼                             ▼
+    ┌─────────────────────────────┐ ┌─────────────────────────────┐ ┌─────────────────────────────┐
+    │        AIBO-FRONTEND        │ │         AIBO-BACKEND        │ │       AIBO-ENGINE-V1.0      │
+    │  (React 19 + Vite 8 + CSS)  │ │  (Express 5 + Mongoose + TS)│ │(FastAPI + Python + LLM Gate)│
+    │  Port 8080 (Browser Client) │ │  Port 5000 (API & Gateway)  │ │  Port 5001 (Cognitive Brain)│
+    └──────────────┬──────────────┘ └──────────────┬──────────────┘ └──────────────┬──────────────┘
+                   │                               │                               │
+                   │ HTTP /api/v1 + Bearer Token   │                               │
+                   └──────────────────────────────►│ Internal HTTP + HMAC Secret   │
+                                                   │ POST /orchestrate (Canonical) │
+                                                   ├──────────────────────────────►│
+                                                   │◄──────────────────────────────┤
+                                                   │ Execution Callbacks           │
+                                                   │                               │
+                                                   ├──────────────┬────────────────┘
+                                                   ▼              ▼
+                                           ┌──────────────┐┌──────────────┐
+                                           │   MongoDB    ││    Redis     │
+                                           │ (Replica rs0)││  (BullMQ +   │
+                                           │ Port 27017   ││  Rate Limit) │
+                                           └──────────────┘└──────────────┘
 ```
 
-Primary architecture references:
+| Repository | Responsibility Boundary | Primary Technologies | Authority & Access Limits |
+| :--- | :--- | :--- | :--- |
+| **`.github`** | Engineering governance, architecture standards, CI/CD policy, ADRs, security runbooks. | Markdown, YAML, GitHub Actions | Owns organization-wide engineering policy; does not contain application business logic. |
+| **`AIBO-BACKEND`** | Authenticated API gateway, session lifecycle, MongoDB persistence, durable state coordinator, task/schedule/project management, real-time Socket.io hub. | Node.js 22+, Express 5, TypeScript 6, Mongoose 9.6, BullMQ, Redis, Pino | Authoritative for all persistence and user authorization. Only layer with direct database connections. |
+| **`AIBO-FRONTEND`** | Web application, user interface, route composition, client-side auth refresh lifecycle, responsive views, real-time WebSocket events. | React 19, Vite 8, TypeScript 6, Zustand 5, Recharts, Lucide, Vitest | Presentation and user experience. Holds access token in memory; never writes to database directly. |
+| **`AIBO-ENGINE-V1.0`** | Cognitive brain, NLU intent classification, entity extraction, planning, authorization policy evaluation, multi-provider LLM gateway, execution coordinator. | Python 3.11+, FastAPI, Pydantic 2, Structlog, Uvicorn, Gemini SDK, OpenAI SDK | Cognitive domain authority. Stateless cognitive coordinator; has **zero direct database access**. |
 
-- [High-level architecture](architecture/overview.md)
-- [Request lifecycle](architecture/request-lifecycle.md)
-- [Auth lifecycle](architecture/auth-lifecycle.md)
-- [AI lifecycle](architecture/ai-lifecycle.md)
-- [Scheduler lifecycle](architecture/scheduler-lifecycle.md)
-- [Deployment topology](architecture/deployment-topology.md)
-- [Database ownership](architecture/database-ownership.md)
-- [Scalability strategy](architecture/scalability-strategy.md)
-- [Mermaid diagram sources](diagrams/README.md)
+---
 
-## Feature Maturity Snapshot
+## 3. Architecture Highlights
 
-| Capability | Status |
-| --- | --- |
-| Backend auth and browser refresh session model | Implemented |
-| Backend task, schedule, and project APIs | Implemented / partial |
-| Frontend auth lifecycle and API client | Partial |
-| Frontend complete task/schedule/project experience | Planned |
-| Engine deterministic classification and routing | Prototype |
-| OpenAI or LLM integration | Planned, not implemented |
-| CI/CD enforcement | Planned foundation |
-| Production deployment | Not implemented |
-| Centralized observability | Planned |
+### 3.1 Canonical Orchestration Pipeline
+Cognitive interactions flow through the canonical lifecycle defined in [`V1.0_ORCHESTRATION_CONTRACT.md`](../docs/releases/V1.0_ORCHESTRATION_CONTRACT.md):
+1. **Request Ingress & Budgeting**: The request enters `POST /api/v1/engine/orchestrate` with monotonic deadline ceilings (default 30s) and correlation tracking (`x-request-id`, `x-correlation-id`).
+2. **Context Hydration**: Session history and semantic cognitive memory are retrieved.
+3. **Understanding**: Intent classification and entity extraction anchor temporal expressions (`date_resolver.py`) relative to reference dates.
+4. **Planning & Decision**: Single-task proposals or multi-action breakdown plans (`ActionBuilder`, `PlanningService`).
+5. **Authorization Policy**: Actions evaluated into `AUTO_EXECUTE`, `ASK_PERMISSION`, or `REQUIRE_CONFIRMATION` based on risk level.
+6. **Durable State Protection**: High-risk actions generate HMAC-SHA256 record-bound confirmation tokens stored durably in MongoDB.
+7. **Atomic Execution**: On confirmation, backend atomically claims the pending state record, preventing race conditions or replay attacks.
 
-The canonical matrix is [docs/product/feature-maturity-matrix.md](docs/product/feature-maturity-matrix.md).
+### 3.2 Dual-Route Backward Compatibility
+The system preserves 100% backward compatibility for legacy clients:
+- **Canonical Route**: `POST /api/v1/engine/orchestrate` -> `POST /orchestrate`
+- **Legacy Fallback Routes**: `POST /process` and `POST /respond`
+- **Rollback Control**: Server controls `ORCHESTRATION_MODE=canonical` or `ORCHESTRATION_MODE=legacy`. Clients cannot force execution modes.
 
-## Technology Stack
+### 3.3 Authoritative Database Model
+- **MongoDB**: Authoritative document store for Users, Sessions, Tasks, Schedules, Projects, Columns, Notifications, Assets, Activity Logs, and Durable Orchestration State Records.
+- **Redis**: In-memory high-throughput cache for BullMQ background event queues and multi-tier rate limiters.
+- **PostgreSQL**: Legacy relational references have been eliminated in favor of a unified Mongoose schema with atomic MongoDB transactions.
 
-| Layer | Current technology |
-| --- | --- |
-| Frontend | React, Vite, React Router, Axios, ESLint, Prettier |
-| Backend | Node.js 22+, Express, Zod, Mongoose, PostgreSQL `pg`, JWT, Helmet, Pino, Jest, Supertest |
-| Engine | Python, FastAPI transport, Pydantic schemas, deterministic rule-based classification and extraction |
-| Data stores | MongoDB for users/sessions/tasks/schedules; PostgreSQL for project management |
-| API documentation | `AIBO-BACKEND/docs/openapi.yaml` is the current OpenAPI source |
-| Tooling | GitHub, npm, Node test runner, Jest, Python unittest, Postman collections |
+---
 
-Not implemented today: Redis caching, OpenAI/LLM integration, production infrastructure automation, centralized metrics/tracing, mobile application, external calendar integration, and automated release deployment.
+## 4. Technology Stack Matrix
 
-## Documentation Map
+| Layer | Runtime / Framework | Core Libraries & Tooling | Testing & Quality Tooling |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | Node.js 22+, React 19, Vite 8 | React Router 7, Zustand 5, Axios, Recharts, Lucide-React, Socket.io-client | Vitest 5, Testing Library, Node Test Runner, ESLint 10, Prettier |
+| **Backend** | Node.js 22+, Express 5 (ESM) | TypeScript 6, Mongoose 9.6, BullMQ 5, Redis (ioredis), Socket.io 4, Helmet, Pino, Zod 4 | Jest 30 (ts-jest), Supertest, Cross-Repo E2E Integration Runner, ESLint |
+| **AI Engine** | Python 3.11+, FastAPI 0.115, Uvicorn | Pydantic 2.10, Structlog 24, google-generativeai, openai, httpx, python-dotenv | Pytest 9, Pytest-Asyncio, MyPy 1.14, Ruff 0.9, Deterministic Mock Provider |
+| **Data Stores** | MongoDB 6+ (Replica Set `rs0`), Redis 7+ | Mongoose ORM, Redis CLI | Mongo Shell, In-Memory Mongo Integration Mock |
+| **Containers** | Docker Engine 24+, Compose v2 | Multi-stage Alpine/Slim Dockerfiles, Nginx Reverse Proxy | `docker compose config`, Container Healthchecks |
 
-| Need | Start here |
-| --- | --- |
-| Product scope and roadmap | [docs/product/vision.md](docs/product/vision.md), [ROADMAP.md](ROADMAP.md) |
-| Architecture | [architecture/overview.md](architecture/overview.md) |
-| Engineering standards | [standards/engineering-principles.md](standards/engineering-principles.md) |
-| Contribution process | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| API rules | [api-governance/README.md](api-governance/README.md) |
-| Security | [SECURITY.md](SECURITY.md), [security/security-governance.md](security/security-governance.md) |
-| Deployment readiness | [deployment/deployment-strategy.md](deployment/deployment-strategy.md) |
-| Observability | [observability/monitoring-strategy.md](observability/monitoring-strategy.md) |
-| Onboarding | [onboarding/README.md](onboarding/README.md) |
-| ADRs | [adr/README.md](adr/README.md) |
+---
 
-## Local Setup Entry Points
+## 5. Documentation Navigation Map
 
-Use the service repository README files for repository-specific commands, and use this repository for the cross-repo setup order.
+| Area | Primary Starting Document | Key Sub-Documents |
+| :--- | :--- | :--- |
+| **Architecture** | [architecture/overview.md](architecture/overview.md) | [service-boundaries.md](architecture/service-boundaries.md) • [repository-relationships.md](architecture/repository-relationships.md) • [ai-lifecycle.md](architecture/ai-lifecycle.md) • [deployment-topology.md](architecture/deployment-topology.md) • [database-ownership.md](architecture/database-ownership.md) • [scalability-strategy.md](architecture/scalability-strategy.md) |
+| **Product & Scope** | [docs/product/vision.md](docs/product/vision.md) | [feature-maturity-matrix.md](docs/product/feature-maturity-matrix.md) • [scope.md](docs/product/scope.md) • [ROADMAP.md](ROADMAP.md) |
+| **Developer Onboarding** | [onboarding/README.md](onboarding/README.md) | [local-setup.md](onboarding/local-setup.md) • [backend-setup.md](onboarding/backend-setup.md) • [engine-setup.md](onboarding/engine-setup.md) • [frontend-setup.md](onboarding/frontend-setup.md) • [testing-guide.md](onboarding/testing-guide.md) • [environment-setup.md](onboarding/environment-setup.md) |
+| **Operations & Runbooks** | [../docs/operations/V1.0_OBSERVABILITY.md](../docs/operations/V1.0_OBSERVABILITY.md) | [V1.0_INCIDENT_RUNBOOK.md](../docs/operations/V1.0_INCIDENT_RUNBOOK.md) • [V1.0_PRODUCTION_DEPLOYMENT_RUNBOOK.md](../docs/operations/V1.0_PRODUCTION_DEPLOYMENT_RUNBOOK.md) • [V1.0_PRODUCTION_ROLLBACK_RUNBOOK.md](../docs/operations/V1.0_PRODUCTION_ROLLBACK_RUNBOOK.md) • [V1.0_CANONICAL_ROLLOUT_RUNBOOK.md](../docs/operations/V1.0_CANONICAL_ROLLOUT_RUNBOOK.md) |
+| **Contracts & Releases** | [../docs/releases/V1.0_ORCHESTRATION_CONTRACT.md](../docs/releases/V1.0_ORCHESTRATION_CONTRACT.md) | [V1.0_PHASE10_FINAL_REPORT.md](../docs/releases/V1.0_PHASE10_FINAL_REPORT.md) • [V1.0_SECURITY_TRUST_BOUNDARY.md](../docs/releases/V1.0_SECURITY_TRUST_BOUNDARY.md) • [V1.0_LLM_GATEWAY_GOVERNANCE.md](../docs/releases/V1.0_LLM_GATEWAY_GOVERNANCE.md) |
+| **Observability** | [observability/monitoring-strategy.md](observability/monitoring-strategy.md) | [health-check-standards.md](observability/health-check-standards.md) • [logging-standards.md](observability/logging-standards.md) • [incident-response.md](observability/incident-response.md) |
+| **Security Governance** | [SECURITY.md](SECURITY.md) | [security/security-governance.md](security/security-governance.md) • [security/secrets-management.md](security/secrets-management.md) • [security/auth-token-policy.md](security/auth-token-policy.md) • [security/logging-redaction.md](security/logging-redaction.md) |
+| **Engineering Standards**| [standards/engineering-principles.md](standards/engineering-principles.md) | [coding-standards.md](standards/coding-standards.md) • [code-review-standards.md](standards/code-review-standards.md) • [branching-strategy.md](standards/branching-strategy.md) • [release-process.md](standards/release-process.md) |
 
-1. Read [onboarding/local-setup.md](onboarding/local-setup.md).
-2. Configure backend environment from [onboarding/environment-setup.md](onboarding/environment-setup.md).
-3. Start `AIBO-ENGINE` locally when testing intent classification.
-4. Start `AIBO-BACKEND` with MongoDB and PostgreSQL available.
-5. Start `AIBO-FRONTEND`; Vite proxies `/api` to the backend during local development.
+---
 
-## Workflow Overview
+## 6. Quick Start & Verification Commands
 
-Every change should follow the same governance flow:
+### One-Command Full Stack (Docker Compose)
+```powershell
+# 1. Start all infrastructure and application services
+docker compose up -d
 
-1. Create a scoped issue or task using the templates in [ISSUE_TEMPLATE](ISSUE_TEMPLATE).
-2. Create a branch that follows [standards/branching-strategy.md](standards/branching-strategy.md).
-3. Keep the change small enough to review.
-4. Run the service-specific lint/test/build checks.
-5. Open a pull request using [PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md).
-6. Document architecture, API, security, or operational impact when applicable.
-7. Merge only after required review and validation evidence are complete.
+# 2. Inspect container status
+docker compose ps
 
-## CI/CD Governance
+# 3. Access endpoints
+# Frontend: http://localhost:8080
+# Backend API: http://localhost:5000/api/v1/health
+# Engine Health: http://localhost:5001/health
+```
 
-The service repositories do not yet have a fully implemented production CI/CD system. This repository provides:
+### Native Verification Commands
+```powershell
+# Cognitive Engine (606 tests + MyPy type check)
+cd AIBO-ENGINE-V1.0
+uv run pytest
+uv run mypy src
 
-- reusable workflow foundations under [.github/workflows](.github/workflows)
-- branch protection recommendations in [workflows/branch-protection.md](workflows/branch-protection.md)
-- CI/CD governance in [workflows/ci-cd-governance.md](workflows/ci-cd-governance.md)
-- release rules in [workflows/release-governance.md](workflows/release-governance.md)
-- changelog automation strategy in [workflows/changelog-automation.md](workflows/changelog-automation.md)
+# Backend API & Cross-Repo E2E (343 Jest tests + 92 E2E scenarios + TS build)
+cd ../AIBO-BACKEND
+npm test
+npm run build
+npm run test:e2e
 
-Deployment workflows are intentionally placeholders until real environments, secrets, approvals, and rollback paths are defined.
+# Web Frontend (87 tests + typecheck + lint + production build)
+cd ../AIBO-FRONTEND
+npm test
+npm run type-check
+npm run lint
+npm run build
+```
 
-## Security Overview
+---
 
-Current backend security foundations include JWT access tokens, HttpOnly refresh-cookie sessions, refresh rotation, validation, rate limiting, Helmet, request IDs, structured logging, and redaction utilities. Required governance is defined in:
+## 7. Governance & Contribution Rules
 
-- [SECURITY.md](SECURITY.md)
-- [security/secrets-management.md](security/secrets-management.md)
-- [security/auth-token-policy.md](security/auth-token-policy.md)
-- [security/logging-redaction.md](security/logging-redaction.md)
-- [security/production-safety.md](security/production-safety.md)
-
-Security issues must not be opened as public issues unless they are already disclosed and non-sensitive.
-
-## AI Architecture Overview
-
-The engine is currently deterministic. It classifies supported intents, extracts entities, routes to action types, and returns structured schema-backed output. It does not call OpenAI or any hosted LLM. Future AI maturity work must add evaluation, safety boundaries, observability, fallback behavior, and explicit confidence thresholds before production automation.
-
-Start with [docs/ai-engine/intent-classification.md](docs/ai-engine/intent-classification.md) and [docs/ai-engine/evaluation-strategy.md](docs/ai-engine/evaluation-strategy.md).
-
-## Ownership
-
-The `.github` repository owns shared governance, not service implementation. Service repositories own their runtime code, tests, and service-specific docs. Cross-repo contracts must be documented here and implemented in the service repos.
-
-Ownership rules are defined in [standards/repository-ownership.md](standards/repository-ownership.md).
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Support
-
-Use [SUPPORT.md](SUPPORT.md) for support paths, maintenance expectations, and escalation rules.
+1. **Pull Request Policy**: All PRs must target a specific feature/fix branch, include automated test coverage, provide green verification evidence, and use [PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md).
+2. **Contract Freeze**: Any modification to `POST /orchestrate` or state-transition tables requires an approved Architecture Decision Record (ADR) in [adr/](adr/).
+3. **Zero Secret Leakage**: Credentials and keys (`ENGINE_SECRET`, `JWT_SECRET`, API keys) must never be checked into version control. Environment files (`.env`) are strictly ignored across all subtrees.
+4. **License**: This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

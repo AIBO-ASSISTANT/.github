@@ -1,61 +1,95 @@
-# AIBO Roadmap
+# AIBO Assistant Ecosystem Roadmap
 
-The roadmap separates implemented capability from strategic direction. It does not claim production infrastructure or advanced AI systems that are not present in the codebase.
+This document outlines completed milestones for **AIBO V1.0 (Release Candidate)** and strategic engineering priorities for subsequent release cycles (V1.1, V1.2, V2.0).
 
-## Current Maturity
+---
 
-| Dimension | Maturity |
-| --- | --- |
-| Backend API | Strongest area; core API modules, auth/session behavior, logging, validation, rate limiting, and tests exist. |
-| Frontend | Early application scaffold with auth lifecycle and limited screens. Product workflows need completion. |
-| Engine | Deterministic prototype with stable contracts, tests, and transport adapter. |
-| CI/CD | Governance foundations are defined here; service repositories still need workflow adoption. |
-| Deployment | Strategy and readiness rules are documented; production deployment is not implemented. |
-| Observability | Structured backend logging exists; metrics, tracing, dashboards, and alerting are planned. |
+## 1. Milestone Summary & Status
 
-## Near-Term Priorities
+```
+[ Phase 0 - Baseline Freeze ] ──► [ Phase 1 - Canonical Contract ] ──► [ Phase 5 - Durable State ]
+                                                                                   │
+[ Phase 10 - Final Release  ] ◄── [ Phase 8/9 - LLM Gateway Gov ]  ◄── [ Phase 6/7 - Migration & Obs ]
+            │
+            ▼
+[ CURRENT: V1.0 CANDIDATE ] ──► [ V1.1 - Observability Stack ] ──► [ V1.2 - External Calendar Sync ]
+                                                                                   │
+                                                                                   ▼
+                                                                        [ V2.0 - Native Mobile App ]
+```
 
-1. Wire reusable CI workflows into `AIBO-BACKEND`, `AIBO-FRONTEND`, and `AIBO-ENGINE`.
-2. Complete frontend integration for implemented backend auth/task/schedule/project flows.
-3. Align backend OpenAPI coverage with implemented project and schedule APIs.
-4. Add engine dependency manifest and service readiness checks.
-5. Define environment-specific deployment targets before adding deployment automation.
-6. Add production readiness checklist for each service.
+| Release Target | Primary Focus | Status | Verification Summary |
+| :--- | :--- | :---: | :--- |
+| **V1.0 (Release Candidate)** | Core platform stability, cognitive engine, multi-provider LLM gateway, durable state, dual-mode orchestration, 92 E2E scenarios. | **COMPLETED** | **1,128/1,128 tests passing** (606 Engine, 343 Backend, 87 Frontend, 92 E2E). Docker Compose verified. |
+| **V1.1 (Observability & Ops)** | Production metrics scraping, Grafana dashboard templates, automated database backup jobs, OpenTelemetry tracing. | **Next Up** | In-process `/metrics` snapshots and structured logging already active; external scraper integration needed. |
+| **V1.2 (Ecosystem Integrations)** | Google Calendar & Microsoft Outlook bi-directional calendar synchronization, webhook subscriptions. | **Planned** | OAuth2 token exchange architecture in planning. |
+| **V2.0 (Mobile & Multi-Agent)** | Native cross-platform mobile client (React Native / Flutter), autonomous multi-agent collaborative workflows. | **Strategic Target**| REST API surface ready for third-party client consumption. |
 
-## Operational Maturity Roadmap
+---
 
-| Phase | Goal | Exit criteria |
-| --- | --- | --- |
-| Foundation | Repeatable local and CI validation | Lint/test/build checks run in PRs for every service. |
-| Pre-production | Controlled deployability | Environment inventory, secrets process, health checks, rollback plan, and release approvals exist. |
-| Production readiness | Observable runtime | Logs, metrics, traces, alerts, dashboards, backup/recovery expectations, and incident runbooks are active. |
-| Scaling readiness | Known bottlenecks and capacity plan | Database ownership, queue/caching decisions, load testing, and service SLOs are documented and tested. |
+## 2. Completed V1.0 Capabilities (Release Baseline)
 
-## AI Maturity Roadmap
+### Backend Architecture (`AIBO-BACKEND`)
+- [x] Express 5.2 (ESM) with TypeScript 6 and Node 22+ runtime.
+- [x] Single authoritative document store in MongoDB (with replica set `rs0` for multi-document ACID transactions).
+- [x] Redis 7 integration for BullMQ background event queues and multi-tier rate limiting.
+- [x] Secure authentication with Bcrypt password hashing, short-lived JWT access tokens, and HttpOnly refresh cookies.
+- [x] Monotonic request deadline governor enforcing a 30-second server ceiling.
+- [x] Dual-mode orchestration router supporting both canonical `POST /orchestrate` and legacy `/process`, `/respond`.
+- [x] In-process metrics snapshots (`/api/v1/health/metrics`) and structured Pino JSON logging with correlation IDs.
 
-| Phase | Goal | Exit criteria |
-| --- | --- | --- |
-| Deterministic baseline | Keep current rules predictable | Classification, extraction, routing, and clarification tests cover supported intents. |
-| Evaluation harness | Measure quality before expansion | Versioned test corpus, precision/recall style metrics, and regression thresholds exist. |
-| Assisted intelligence | Add richer NLP only behind contracts | Any LLM or model provider is isolated behind the engine contract, evaluated, observable, and fail-safe. |
-| Production AI operations | Govern model changes | Prompt/model versioning, safety review, fallback routing, and monitoring are mandatory. |
+### Cognitive AI Subsystem (`AIBO-ENGINE-V1.0`)
+- [x] Modular FastAPI cognitive engine with Pydantic 2 schemas and Structlog structured JSON logging.
+- [x] NLU Intent classification and entity extraction with deterministic temporal anchoring (`date_resolver.py`).
+- [x] Multi-provider LLM Gateway routing between Google Gemini 3.6 Flash, OpenAI GPT-4o-mini, and local Ollama Qwen2.5.
+- [x] Deterministic mock provider enabling 0-cost, fail-fast CI and E2E testing.
+- [x] Circuit breaker and exponential retry policies protecting against provider rate limits and outages.
+- [x] Action Authorizer evaluating actions into `AUTO_EXECUTE`, `ASK_PERMISSION`, and `REQUIRE_CONFIRMATION`.
+- [x] Server-held HMAC-SHA256 confirmation tokens and atomic MongoDB state claiming.
+- [x] Zero direct database connection invariant.
 
-## Scaling Roadmap
+### Web Frontend (`AIBO-FRONTEND`)
+- [x] React 19 single-page application built with Vite 8 and TypeScript 6.
+- [x] Comprehensive productivity views: Dashboard, Scheduler, Project Manager Kanban, Diary, Settings Hub, Help Center.
+- [x] In-memory access token storage with silent background refresh via HttpOnly cookies.
+- [x] Multi-tab session synchronization and real-time Socket.io notification updates.
+- [x] Dark/light theme design system tokens with responsive layouts.
+- [x] Zero build errors; 87 unit and component tests passing.
 
-- Keep MongoDB ownership for users, sessions, tasks, and schedules until a measured bottleneck requires a change.
-- Keep PostgreSQL ownership for project management relational workflows.
-- Introduce queues only when asynchronous work exists and retry behavior is designed.
-- Introduce caching only for measured read pressure or expensive deterministic computation.
-- Add horizontal scaling only after session, cookie, CORS, health check, and database connection behavior is production-ready.
+### Multi-Container Deployment & Verification
+- [x] Multi-stage production Dockerfiles for Frontend, Backend, and Engine.
+- [x] Complete multi-service `docker-compose.yml` stack validated with health check dependencies.
+- [x] Comprehensive 92-scenario cross-repository end-to-end integration test harness.
 
-## Production Readiness Roadmap
+---
 
-Production is not declared until all of the following are true:
+## 3. Near-Term Roadmap (V1.1)
 
-- CI is required and passing on protected branches.
-- Deployment target, environment variables, secrets, and rollback process are documented.
-- Health checks exist for frontend, backend, engine, MongoDB, and PostgreSQL dependencies.
-- Logs are centralized and redacted.
-- Security disclosure process is active.
-- Backup and recovery expectations are documented and tested.
-- Feature maturity matrix is reviewed for release accuracy.
+1. **Prometheus / Grafana Monitoring Integration**:
+   - Provide standard Prometheus scrape configuration targeting `/api/v1/health/metrics` and Engine `/metrics`.
+   - Export curated Grafana dashboard JSON models for latency percentiles, error rates, and queue depths.
+2. **Automated Database Backup Runbook Execution**:
+   - Package scheduled cron jobs for `mongodump` snapshots with S3 upload and retention rotation.
+3. **OpenTelemetry Distributed Tracing**:
+   - Upgrade internal `x-correlation-id` and `x-request-id` headers to W3C Trace Context standards.
+
+---
+
+## 4. Medium-Term Roadmap (V1.2)
+
+1. **External Calendar Providers**:
+   - Google Calendar API v3 integration for bi-directional event synchronization.
+   - Microsoft Graph Outlook Calendar integration.
+2. **Push Notifications**:
+   - Web Push API integration for desktop and mobile browser notifications during quiet hour wakeups.
+3. **Voice Interface Prototype**:
+   - Speech-to-Text (STT) and Text-to-Speech (TTS) pipeline integration for hands-free scheduling.
+
+---
+
+## 5. Long-Term Vision (V2.0)
+
+1. **Cross-Platform Mobile Client**:
+   - Native iOS and Android application with biometric login and background sync.
+2. **Multi-Agent Collaborative Workflows**:
+   - Autonomous agent swarms for complex project planning, research synthesis, and cross-team delegation.

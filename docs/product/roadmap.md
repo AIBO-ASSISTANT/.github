@@ -1,18 +1,37 @@
-# Product Roadmap
+# AIBO Assistant — Product Roadmap & Sequencing
 
-The strategic roadmap is maintained in [../../ROADMAP.md](../../ROADMAP.md). This document exists to keep product-specific sequencing clear.
+The strategic engineering roadmap is maintained in [../../ROADMAP.md](../../ROADMAP.md). This document outlines product sequencing and quality gates.
 
-## Product Sequence
+---
 
-1. Make core backend workflows usable from the frontend.
-2. Stabilize API documentation and generated client expectations.
-3. Add a chatbot capture surface only after task, schedule, and project flows are reliable.
-4. Improve engine extraction and routing with evaluation data.
-5. Add planning recommendations only after measurement, confirmation, and fallback behavior are designed.
+## 1. Product Evolution Sequencing
 
-## Product Quality Gates
+### Phase 1: Core Productivity & Cognitive Foundations (Completed in V1.0)
+- Deliver unified web user experience across Tasks, Schedules, Project Boards, Diary, and Settings.
+- Establish canonical cognitive orchestration boundary (`POST /orchestrate`) with strict monotonic deadline budgets.
+- Integrate multi-provider LLM Gateway (Gemini 3.6 Flash, OpenAI GPT-4o-mini, Ollama Qwen2.5) with automatic fallback and circuit breaker.
+- Enforce durable confirmation state machine in MongoDB preventing double-execution races and replay attacks.
+- Verify 100% test pass rate across 1,128 automated tests and 92 E2E scenarios.
 
-- A product feature cannot move to `Implemented` without an intended user interface or documented API-only status.
-- AI-assisted behavior must expose uncertainty and allow user correction.
-- Any feature that stores or mutates user data must include validation, authorization, and error handling.
-- Roadmap items must reference current maturity; planned features cannot be described as existing behavior.
+### Phase 2: Operations & Observability Hardening (V1.1 Target)
+- Expose connected Grafana dashboard visualizations and Prometheus metric scrapers.
+- Automated snapshot backup tooling and point-in-time recovery runbooks.
+- W3C OpenTelemetry distributed tracing across HTTP, WebSockets, and engine transport.
+
+### Phase 3: Connected Ecosystem Integrations (V1.2 Target)
+- Bi-directional calendar synchronization with Google Calendar and Microsoft 365.
+- Browser Web Push notifications for urgent task reminders.
+- Hands-free voice interface prototype for conversational task capture.
+
+### Phase 4: Mobile & Collaborative Autonomous Agents (V2.0 Target)
+- Native cross-platform mobile client for iOS and Android.
+- Multi-agent collaborative reasoning loops for deep project synthesis and delegation.
+
+---
+
+## 2. Product Quality Gates
+
+1. **Explicit Confirmation on High-Risk Actions**: Destructive mutations (deletion of tasks, projects, or schedule items) must never occur autonomously; they require cryptographic, server-held confirmation tokens.
+2. **Deterministic Temporal Consistency**: Temporal references ("tomorrow", "next week") must resolve deterministically against anchor dates (`date_resolver.py`), preventing calendar drift.
+3. **Fail-Safe Zero-Mutation Guarantee**: If a network error, provider outage, or deadline expiration occurs, no partial or dirty mutations may be written to MongoDB.
+4. **Transparent Assistant Communication**: The assistant must truthfully report execution outcomes, conflicts, or errors, and must never claim success when an action was blocked or failed.

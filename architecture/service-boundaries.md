@@ -1,58 +1,100 @@
-# Service Boundaries
+# AIBO Assistant — Service Boundaries & Trust Zones
 
-## Frontend Boundary
+This document establishes the authoritative responsibility boundaries, trust zones, and operational invariants for each component in the AIBO ecosystem.
 
-`AIBO-FRONTEND` owns:
+---
 
-- UI routes and page composition.
-- Browser-only auth lifecycle.
-- In-memory access token handling.
-- API client behavior and user-visible error states.
-- Accessibility and interaction quality.
+## 1. Trust Hierarchy & Network Topology
 
-It must not:
+```
+[ Public Internet ]
+        │
+        ▼ (Port 8080)
+┌────────────────────────────────────────────────────────┐
+│ PUBLIC TRUST ZONE: AIBO-FRONTEND (Client Browser)      │
+│ - Untrusted execution environment                      │
+│ - In-memory tokens only                                │
+└───────────────────────┬────────────────────────────────┘
+                        │
+                        ▼ (Port 5000 / HTTPS)
+┌────────────────────────────────────────────────────────┐
+│ PERIMETER TRUST ZONE: AIBO-BACKEND (API Gateway)       │
+│ - Authentication authority                             │
+│ - Request validation & rate limiting                   │
+│ - Only service with direct database credentials        │
+└───────────────┬────────────────────────┬───────────────┘
+                │                        │
+                ▼ (Port 5001 / Private)  ▼ (Port 27017, 6379)
+┌──────────────────────────────┐ ┌──────────────────────┐
+│ COGNITIVE TRUST ZONE:        │ │ PERSISTENCE ZONE:    │
+│ AIBO-ENGINE-V1.0             │ │ MongoDB (rs0)        │
+│ - Zero direct DB access      │ │ Redis (BullMQ Cache) │
+│ - Shared secret HMAC auth    │ │                      │
+│ - LLM provider gateway       │ │                      │
+└──────────────────────────────┘ └──────────────────────┘
+```
 
-- store refresh tokens
-- construct database queries
-- bypass backend authorization
-- call databases directly
-- treat planned backend endpoints as implemented
+---
 
-## Backend Boundary
+## 2. Subsystem Boundaries
 
-`AIBO-BACKEND` owns:
+### 2.1 Web Frontend Boundary (`AIBO-FRONTEND`)
+**Owns:**
+- Client-side routing and page composition (React Router 7).
+- User presentation and theme token styling (light/dark mode).
+- In-memory access token storage (cleared on tab close/logout).
+- Silent session refresh lifecycle via HttpOnly cookie (`POST /api/v1/auth/refresh`).
+- Real-time event consumption (Socket.io notification and task updates).
+- Client-side offline detection and optimistic state synchronization.
 
-- `/api/v1` HTTP API.
-- auth, refresh rotation, logout, and current-user behavior.
-- API validation and response envelopes.
-- MongoDB and PostgreSQL data access.
-- orchestration of engine calls.
-- request logging, request IDs, rate limiting, security middleware.
+**Must NOT:**
+- Store access tokens in `localStorage` or `sessionStorage` (XSS vulnerability).
+- Store or inspect refresh tokens (handled strictly by browser cookie engine).
+- Formulate raw MongoDB database queries or direct storage calls.
+- Execute business logic authorization decisions (all permissions verified by backend).
+- Bypass backend security gates to call `AIBO-ENGINE-V1.0` directly.
 
-It must not:
+### 2.2 Backend Gateway Boundary (`AIBO-BACKEND`)
+**Owns:**
+- Public API surface (`/api/v1/*`) and OpenAPI specification compliance.
+- User identity, Bcrypt password hashing, JWT generation, and refresh cookie rotation.
+- Authoritative persistence for Users, Sessions, Tasks, Schedules, Projects, Columns, Notifications, and Activity Logs.
+- Monotonic request deadline management (30-second ceiling) with reserve buffers.
+- Dual-mode orchestration routing (`ORCHESTRATION_MODE=canonical` vs `legacy`).
+- Distributed rate limiting and BullMQ background task processing via Redis.
+- Atomic claiming of pending durable confirmation state records.
+- Sanitization of outbound error payloads (zero internal stack/secret leakage).
 
-- embed frontend UI decisions
-- implement engine internals inside controllers
-- accept unvalidated engine payloads
-- move data ownership without an ADR
+**Must NOT:**
+- Implement cognitive LLM prompting or natural language entity parsing directly in controllers.
+- Trust client-supplied user identity when authenticated tokens specify otherwise.
+- Allow mutation on unverified or expired confirmation tokens.
+- Execute non-idempotent operations without transaction or atomic state guards.
 
-## Engine Boundary
+### 2.3 Cognitive Brain Boundary (`AIBO-ENGINE-V1.0`)
+**Owns:**
+- Natural Language Understanding (NLU): Intent classification and entity extraction.
+- Deterministic temporal resolution via `date_resolver.py` relative to anchor dates.
+- Goal decomposition and planning proposals (`PlanningService`).
+- Action authorization evaluation (`AUTO_EXECUTE`, `ASK_PERMISSION`, `REQUIRE_CONFIRMATION`).
+- Multi-provider LLM gateway orchestration (Gemini, OpenAI, Ollama) with circuit breaker and fallback.
+- High-entropy confirmation token synthesis (HMAC-SHA256).
+- In-process metrics snapshots and health introspection (`/health`, `/ready`, `/metrics`).
 
-`AIBO-ENGINE` owns:
+**Must NOT:**
+- Connect to MongoDB, Redis, or external persistence stores directly.
+- Authenticate end users directly or issue user credentials.
+- Execute mutations against external systems directly without invoking backend client callbacks.
+- Retain unauthorized state beyond the request lifecycle.
+- Fall back to non-deterministic mocks in production mode (`ENGINE_ENVIRONMENT=production`).
 
-- deterministic intent classification.
-- entity extraction.
-- decision routing.
-- canonical engine schemas.
-- transport adapter for service-to-service classification.
+### 2.4 Central Governance Boundary (`.github`)
+**Owns:**
+- Architecture Decision Records (ADRs) and organizational standards.
+- Reusable CI/CD workflow templates and branch protection policies.
+- Ecosystem documentation, onboarding guides, and operational runbooks.
+- Vulnerability disclosure and security compliance guidelines.
 
-It must not:
-
-- authenticate users
-- write application data
-- decide backend authorization
-- claim LLM behavior without implementation and evaluation
-
-## Governance Boundary
-
-`.github` owns cross-repo policy. It must not become a dumping ground for service-specific implementation details that belong in service repos.
+**Must NOT:**
+- Host runtime application code or service-specific configuration files.
+- Duplicate documentation that is authoritative within individual service repositories.

@@ -1,9 +1,10 @@
 flowchart LR
-  User[User] --> Frontend[AIBO-FRONTEND]
-  Frontend --> Backend[AIBO-BACKEND]
-  Backend --> Mongo[(MongoDB)]
-  Backend --> Postgres[(PostgreSQL)]
-  Backend --> Engine[AIBO-ENGINE]
-  Governance[.github governance] -. standards .-> Frontend
-  Governance -. standards .-> Backend
-  Governance -. standards .-> Engine
+  User[User Browser] --> Frontend[AIBO-FRONTEND (React 19 / Vite 8 / Nginx)]
+  Frontend --> Backend[AIBO-BACKEND (Node 22 / Express 5 API)]
+  Backend --> Mongo[(MongoDB Replica Set rs0)]
+  Backend --> Redis[(Redis 7 Cache)]
+  Backend --> Engine[AIBO-ENGINE-V1.0 (FastAPI Cognitive Zone)]
+  Engine --> Gateway[Multi-Provider LLM Gateway: Gemini / OpenAI / Ollama]
+  Governance[.github Governance] -. standards & contracts .-> Frontend
+  Governance -. standards & contracts .-> Backend
+  Governance -. standards & contracts .-> Engine

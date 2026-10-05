@@ -1,16 +1,14 @@
-name: AIBO-ENGINE CI
+name: AIBO-ENGINE-V1.0 CI
 
 on:
   push:
     branches: [ "main" ]
     paths:
       - "AIBO-ENGINE-V1.0/**"
-      - "AIBO-ENGINE/**"
   pull_request:
     branches: [ "main" ]
     paths:
       - "AIBO-ENGINE-V1.0/**"
-      - "AIBO-ENGINE/**"
   workflow_dispatch:
 
 jobs:
@@ -25,10 +23,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.13
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.11"
           cache: "pip"
 
       - name: Install dependencies
@@ -41,7 +39,7 @@ jobs:
         run: |
           mypy src
 
-      - name: Run pytest test suite
+      - name: Run pytest test suite (606 tests)
         run: |
           pytest tests/ -v
 

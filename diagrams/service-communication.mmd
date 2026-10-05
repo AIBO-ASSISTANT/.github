@@ -1,15 +1,29 @@
 sequenceDiagram
-  participant F as AIBO-FRONTEND
-  participant B as AIBO-BACKEND
-  participant E as AIBO-ENGINE
-  participant M as MongoDB
-  participant P as PostgreSQL
-  F->>B: /api/v1 request
-  B->>B: auth + validation
-  B->>M: users/sessions/tasks/schedules
-  B->>P: project management
-  B->>E: POST /ai-engine/analyze
-  E-->>B: classification + entities
-  B->>E: POST /decision-engine/decide
-  E-->>B: task type + actions
-  B-->>F: API envelope
+  autonumber
+  participant F as AIBO-FRONTEND (React 19)
+  participant B as AIBO-BACKEND (Express 5)
+  participant M as MongoDB (rs0)
+  participant R as Redis 7
+  participant E as AIBO-ENGINE-V1.0 (FastAPI)
+  participant G as LLM Gateway (Gemini/OpenAI/Ollama)
+
+  F->>B: POST /api/v1/ai/chat with X-Request-Id & JWT
+  B->>B: Verify Auth, Rate-Limit & Hydrate Project Context
+  B->>R: Check Session & Token Cache
+  B->>M: Fetch Recent Conversation History
+  B->>E: POST /orchestrate (monotonic deadline + X-Engine-Secret)
+  E->>E: NLU Intent Classification & Temporal Entity Resolution
+  E->>G: Invoke Model Provider (Fallback circuits active)
+  G-->>E: Provider Tokens & Raw Generation
+  E->>E: LangGraph Plan & Action Proposal Generation
+  E-->>B: Standard Orchestration Result Envelope
+  alt High-Risk Action (Delete / Reassign / Bulk Update)
+    B->>B: Generate Cryptographic HMAC Confirmation Token
+    B-->>F: ActionPendingConfirmation + Token
+    F-->>B: POST /api/v1/ai/confirm with HMAC Token
+    B->>M: Atomic Token Claim & MongoDB Multi-Doc Transaction
+    B-->>F: ActionExecuted Confirmation
+  else Safe Read or Low-Risk Mutate
+    B->>M: Execute Direct MongoDB Mutation
+    B-->>F: HTTP 200 OK Action Executed
+  end

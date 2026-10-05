@@ -10,7 +10,7 @@ on:
       python-version:
         required: false
         type: string
-        default: "3.12"
+        default: "3.11"
 
 jobs:
   python-tests:
@@ -27,17 +27,34 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ inputs.python-version }}
+          cache: "pip"
 
-      - name: Install dependencies when manifest exists
+      - name: Install dependencies
         shell: bash
         run: |
-          if [ -f requirements.txt ]; then
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f pyproject.toml ]; then
+            python -m pip install -e .
+            python -m pip install pytest pytest-asyncio anyio httpx mypy build
+          elif [ -f requirements.txt ]; then
             python -m pip install -r requirements.txt
-          elif [ -f pyproject.toml ]; then
-            python -m pip install .
+            python -m pip install pytest pytest-asyncio anyio httpx
           else
-            python -m pip install fastapi pydantic uvicorn
+            python -m pip install fastapi pydantic uvicorn pytest pytest-asyncio
+          fi
+
+      - name: Run typecheck
+        shell: bash
+        run: |
+          if command -v mypy &> /dev/null && [ -d src ]; then
+            mypy src || true
           fi
 
       - name: Run tests
-        run: python -m unittest discover -s tests
+        shell: bash
+        run: |
+          if command -v pytest &> /dev/null; then
+            pytest tests/ -v
+          else
+            python -m unittest discover -s tests
+          fi

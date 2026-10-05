@@ -1,37 +1,59 @@
-# Environment Setup
+# Environment Setup Guide
 
-## Backend
+This guide details the standard environment variable configurations for running AIBO Assistant services locally and in containerized environments.
 
-Important variables include:
+---
+
+## Backend (`AIBO-BACKEND/.env`)
+
+Copy `AIBO-BACKEND/.env.example` to `AIBO-BACKEND/.env`:
 
 ```env
 NODE_ENV=development
 PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/aibo_backend
-POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:5432/aibo_backend
-JWT_SECRET=replace_with_local_long_random_secret
-ENGINE_BASE_URL=http://localhost:5001
-ENGINE_TIMEOUT=3000
+MONGODB_URI=mongodb://127.0.0.1:27017/aibo?replicaSet=rs0
+REDIS_URL=redis://127.0.0.1:6380
+JWT_SECRET=super_secret_local_dev_key_min_32_characters_long!
+ENGINE_SECRET=dev_shared_engine_pre_shared_key
+AI_ENGINE_URL=http://127.0.0.1:5001
+AI_ENGINE_TIMEOUT_MS=30000
 CORS_ORIGIN=http://localhost:5173
 AUTH_COOKIE_NAME=aibo_refresh_token
 AUTH_COOKIE_PATH=/api/v1/auth
 AUTH_COOKIE_SAME_SITE=lax
 AUTH_COOKIE_SECURE=false
+LOG_LEVEL=info
 ```
 
-Use safe local values only. Do not commit real `.env` files.
+> [!NOTE]
+> **PostgreSQL Retired**: All database connections use `MONGODB_URI`. Relational PostgreSQL variables are obsolete.
 
-## Frontend
+---
+
+## Frontend (`AIBO-FRONTEND/.env`)
+
+Copy `AIBO-FRONTEND/.env.example` to `AIBO-FRONTEND/.env.local`:
 
 ```env
-VITE_APP_NAME=AIBO
+VITE_APP_NAME="AIBO Assistant"
 VITE_API_BASE_URL=/api/v1
+VITE_SOCKET_URL=http://localhost:5000
 ```
 
-Use `.env.local` for local overrides.
+---
 
-## Engine
+## AI Cognitive Engine (`AIBO-ENGINE-V1.0/.env`)
 
-The engine currently does not include a dependency manifest in the inspected workspace. Install required Python dependencies locally until a manifest is added.
+`AIBO-ENGINE-V1.0` dependencies are formally managed via [`pyproject.toml`](file:///c:/Projects/AIBO_ASSISTANT/AIBO-ENGINE-V1.0/pyproject.toml). Configure `AIBO-ENGINE-V1.0/.env`:
 
-Known runtime libraries include FastAPI, Pydantic, and Uvicorn for the transport.
+```env
+PORT=5001
+HOST=0.0.0.0
+ENVIRONMENT=development
+ENGINE_SECRET=dev_shared_engine_pre_shared_key
+PRIMARY_LLM_PROVIDER=gemini
+GEMINI_API_KEY=your_gemini_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+LOG_LEVEL=INFO
+```

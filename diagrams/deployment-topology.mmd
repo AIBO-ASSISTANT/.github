@@ -1,7 +1,26 @@
-flowchart LR
-  Browser --> Frontend[Frontend runtime]
-  Frontend --> Backend[Backend API runtime]
-  Backend --> Mongo[(MongoDB)]
-  Backend --> Postgres[(PostgreSQL)]
-  Backend --> Engine[Engine runtime]
-  Note[Current: local topology only. Production target not implemented.]
+flowchart TD
+  subgraph Public Client
+    Browser[Browser Client]
+  end
+
+  subgraph Perimeter Zone [Port 8080 / 5000]
+    Frontend[aibo-frontend: Nginx Alpine on :8080]
+    Backend[aibo-backend: Node 22 / Express 5 on :5000]
+  end
+
+  subgraph Private Cognitive Zone [Port 5001 - Internal Network Only]
+    Engine[aibo-engine: Python 3.11 / FastAPI on :5001]
+    Ollama[ollama: Local LLM Provider on :11434]
+  end
+
+  subgraph Persistence Zone [Internal Network]
+    Mongo[(mongodb: MongoDB 7.0 rs0 on :27017)]
+    Redis[(redis: Redis 7 on :6380)]
+  end
+
+  Browser -->|HTTP / WebSocket| Frontend
+  Frontend -->|Reverse Proxy /api/ & /socket.io/| Backend
+  Backend -->|Mongoose ACID Multi-Doc| Mongo
+  Backend -->|Token Bucket & Session Cache| Redis
+  Backend -->|POST /orchestrate X-Engine-Secret| Engine
+  Engine -.->|Local Inference| Ollama

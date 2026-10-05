@@ -1,10 +1,10 @@
 flowchart LR
-  Frontend[Frontend] --> Backend[Backend API]
-  Backend --> Engine[Engine]
-  Backend --> Mongo[(Managed MongoDB)]
-  Backend --> Postgres[(Managed PostgreSQL)]
-  Backend --> Logs[Central logs]
-  Backend --> Metrics[Metrics]
-  Engine --> Metrics
-  Metrics --> Alerts[Alerts]
-  Eval[AI evaluation corpus] --> Engine
+  Frontend[React 19 Frontend] --> Backend[AIBO-BACKEND Express 5 Cluster]
+  Backend --> Engine[AIBO-ENGINE-V1.0 FastAPI]
+  Backend --> Mongo[(Managed MongoDB Atlas rs0)]
+  Backend --> Redis[(Managed Redis Cluster)]
+  Backend --> Telemetry[Prometheus / OpenTelemetry Sink]
+  Engine --> Telemetry
+  Telemetry --> Dashboards[Grafana Dashboards & Alerts]
+  Engine --> Gateway[Multi-Provider Gateway: Gemini / OpenAI / Ollama]
+  Eval[Continuous AI Evaluation Corpus] --> Engine
